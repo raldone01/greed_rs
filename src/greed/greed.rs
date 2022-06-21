@@ -4,9 +4,14 @@ use rand::distributions::Uniform;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 use rand::{thread_rng, Rng};
+use serde::Deserialize;
+use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
 use std::collections::*;
 use std::fmt;
+use std::iter::FusedIterator;
+use std::ops::{Index, IndexMut};
 use std::os::windows::thread;
 
 use super::*;
@@ -44,7 +49,9 @@ impl<'rng, RNG> TileChooser<'rng, RNG> {
 pub type DifficultyMap = HashMap<Tile, f64>;
 
 pub trait DifficultyMapExt {
+  /// TODO remove
   pub fn saturate_difficulties<'a>(&'a mut self) -> &'a Self;
+  /// TODO rename to calculate_percentages
   pub fn normalize_difficulties<'a>(&'a mut self) -> &'a Self;
   pub fn default_difficulties() -> &'static Self;
   pub fn new_difficulty_map() -> Self;
@@ -110,7 +117,7 @@ impl<'a> Iterator for RowIter<'a> {
     if self.row < y_size {
       let offset = self.row * y_size;
       self.row += 1;
-      Ok(&self.game_field.vec[offset..offset + x_size])
+      Some(&self.game_field.vec[offset..offset + x_size])
     } else {
       None
     }
@@ -127,23 +134,71 @@ impl<'a> DoubleEndedIterator for RowIter<'a> {
     if self.row > 0 {
       self.row -= 1;
       let offset = self.row * y_size;
-      Ok(&self.game_field.vec[offset..offset + x_size])
+      Some(&self.game_field.vec[offset..offset + x_size])
     } else {
       None
     }
   }
 }
 
+impl<'a> FusedIterator for RowIter<'a> {}
+
 impl<'a> ExactSizeIterator for RowIter<'a> {}
 
+pub struct RowIterMut<'a> {
+  game_field: &'a mut GameField,
+  row: usize,
+}
+
+impl<'a> Iterator for RowIterMut<'a> {
+  type Item = &'a mut [Tile];
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let &GameField { x_size, y_size, .. } = self.game_field;
+    if self.row < y_size {
+      let offset = self.row * y_size;
+      self.row += 1;
+      Some(&mut self.game_field.vec[offset..offset + x_size])
+    } else {
+      None
+    }
+  }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    (self.game_field.y_size, Some(self.game_field.y_size))
+  }
+}
+
+impl<'a> DoubleEndedIterator for RowIterMut<'a> {
+  fn next_back(&mut self) -> Option<Self::Item> {
+    let &GameField { x_size, y_size, .. } = self.game_field;
+    if self.row > 0 {
+      self.row -= 1;
+      let offset = self.row * y_size;
+      Some(&mut self.game_field.vec[offset..offset + x_size])
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a> FusedIterator for RowIterMut<'a> {}
+
+impl<'a> ExactSizeIterator for RowIterMut<'a> {}
+
 impl GameField {
-  pub fn new(rows: u64, cols: u64) -> Self {
-    // TODO SEED HERE AND RANDOMIZE
+  /// Constructs an GameField full of Empty tiles.
+  /// It is in an invalid state!
+  fn new_empty(rows: u64, cols: u64) -> Self {
     Self {
       vec: vec![Tile::Empty; usize::try_from(rows * cols).unwrap()],
       x_size: usize::try_from(cols).unwrap(),
       y_size: usize::try_from(rows).unwrap(),
     }
+  }
+
+  pub fn default_classic_game_size() -> Pos {
+    Pos { x: 79, y: 21 }
   }
 
   fn pos_to_index(&self, pos: Pos) -> usize {
@@ -157,20 +212,22 @@ impl GameField {
     Pos { x, y }
   }
 
-  fn rows(&self) -> RowIter {
+  pub fn row_iter(&self) -> RowIter {
     RowIter {
       game_field: self,
       row: 0,
     }
   }
 
-  fn index_mut(&mut self, pos: Pos) -> &mut Tile {
-    &mut self.vec[self.pos_to_index(pos)]
+  pub fn row_iter_mut(&mut self) -> RowIterMut {
+    RowIterMut {
+      game_field: self,
+      row: 0,
+    }
   }
 
-  pub fn index(&self, pos: Pos) -> Tile {
-    self.vec[pos.x + pos.y * self.x_size]
-  }
+  // pub fn col_iter(&self) -> ColIter {}
+  // pub fn col_iter_mut(&mut self) -> ColIter<mut> {}
 
   fn randomize_field(&mut self, tile_chooser: &TileChooser<impl Rng>) {
     for tile in self.vec.iter_mut() {
@@ -191,10 +248,24 @@ impl GameField {
   }
 }
 
+impl Index<Pos> for GameField {
+  type Output = Tile;
+
+  fn index(&self, index: Pos) -> &Self::Output {
+    &self.vec[self.pos_to_index(pos)]
+  }
+}
+
+impl IndexMut<Pos> for GameField {
+  fn index_mut(&mut self, index: Pos) -> &mut Self::Output {
+    &mut self.vec[self.pos_to_index(pos)]
+  }
+}
+
 impl From<GameField> for String {
   fn from(game_field: GameField) -> Self {
     let out = String::with_capacity(game_field.x_size * game_field.y_size + game_field.y_size);
-    for row in game_field.rows() {
+    for row in game_field.row_iter() {
       for tile in row {
         out.push(tile.into())
       }
@@ -208,7 +279,8 @@ impl TryFrom<&str> for GameField {
   type Error = GameFieldParserError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    let mut vec = Vec::with_capacity(64 * 64); // TODO: check default games size
+    let default_size = GameField::default_classic_game_size();
+    let mut vec = Vec::with_capacity(default_size.x * default_size.y);
 
     let mut x_size = None;
     let mut x_pos = 0;
@@ -297,12 +369,15 @@ impl Direction {
   }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct GameMeta {
-  pub version: Option<u64>,
+  pub file_version: Option<u64>,
+  pub greed_version: Option<u64>,
   pub seed: Option<String>,
-  pub name: String,
-  pub utc_started_ms: Option<u64>,
+  pub name: Option<String>,
+  pub utc_started_ms: Option<i64>,
+  pub utc_finished_ms: Option<i64>,
+  pub time_spent_ms: Option<i64>,
   pub difficulty_map: Option<DifficultyMap>,
 }
 
@@ -314,7 +389,17 @@ pub struct Greed {
 
 impl Greed {
   pub fn new(size: Pos, mut game_meta: GameMeta) -> Self {
+    game_meta.greed_version = 1;
+    if game_meta.file_version.is_none() {
+      game_meta.file_version = 1
+    }
+
+    if game_meta.utc_started_ms.is_none() {
+      game_meta.utc_started_ms = Some(chrono::Utc::now().timestamp_millis());
+    }
+
     if (game_meta.seed.is_none()) {
+      // If no seed is provided generate one
       let mut thread_rng = thread_rng();
       let uniform = Uniform::new_inclusive('A', 'Z');
       let random_string = (0..512)
@@ -325,17 +410,18 @@ impl Greed {
     let string_seed = &game_meta.seed.unwrap();
     let mut hasher = Sha512::new();
     hasher.update(string_seed);
-    let result = hasher.finalize();
+    let hash = hasher.finalize();
+    let used_hash = hash[0..16];
+    // game_meta.seed = Some();
+    // game_name
+    let rng = rand_pcg::Pcg64Mcg::from_seed(used_hash); // init the random gen with the first 16 bytes of the hash
+    let tile_chooser = TileChooser::new(&mut rng, game_meta.difficulty_map);
+    let game_field = GameField::new_empty(size.x, size.y);
+    game_field.randomize_field(&tile_chooser);
 
-    let rng = rand_pcg::Pcg64Mcg::from_seed(result);
-    let tile_chooser = TileChooser();
     Self {
       meta: game_meta,
-      field: GameField {
-        vec: (),
-        x_size: (),
-        y_size: (),
-      },
+      field: game_field,
     }
   }
   pub fn game_meta(&self) -> &GameMeta {
@@ -346,12 +432,12 @@ impl Greed {
   }
   fn _move(&mut self, dir: Direction, consume: bool) -> Result<[Pos], GreedError> {}
   /// Returns the positions that were consumed.
-  /// They are in order from the closest to the furtherest.
+  /// They are in order from the closest to the farthest.
   pub fn move_(&mut self, dir: Direction) -> Result<[Pos], GreedError> {}
   /// Returns the positions that would be consumed.
-  /// They are in order from the closest to the furtherest.
+  /// They are in order from the closest to the farthest.
   /// # Examples
-  /// ```
+  /// ```rust
   /// use greed::*;
   ///
   /// let game = Greed::new(...);
@@ -366,12 +452,12 @@ impl TryFrom<String> for Greed {
   type Error = GameFieldParserError;
 
   fn try_from(value: String) -> Result<Self, Self::Error> {
-    todo!("Load game meta")
+    todo!("Load game meta then parse game field")
   }
 }
 
 impl Into<String> for Greed {
   fn into(self) -> String {
-    todo!("Save game meta")
+    todo!("Save game meta then write game field")
   }
 }
