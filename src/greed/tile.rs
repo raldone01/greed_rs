@@ -44,7 +44,7 @@ impl From<Tile> for char {
   fn from(tile: Tile) -> Self {
     match tile {
       Player => '@',
-      V0 => ' ',
+      // V0 => ' ', Handled in the display function
       // x if let Some(amount) = self.amount() => { Ok(()) } Unstable damn
       _ => tile.amount().map(|a| char::from_digit(a, 10)).unwrap(),
     }
@@ -68,7 +68,11 @@ impl TryFrom<char> for Tile {
 
 impl fmt::Display for Tile {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.into())
+    let mut c: char = self.into();
+    if c == '0' {
+      c = ' ';
+    }
+    write!(f, "{}", c)
   }
 }
 

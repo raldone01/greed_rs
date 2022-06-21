@@ -6,6 +6,10 @@ use super::*;
 pub enum GreedError {
   #[error("Invalid direction")]
   InvalidDirection,
+  #[error("Bad move")]
+  BadMove,
+  #[error("Game complete")]
+  GameComplete,
 }
 
 #[derive(Error, Debug)]

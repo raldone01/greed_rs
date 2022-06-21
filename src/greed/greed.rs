@@ -1,10 +1,13 @@
 use bitflags::bitflags;
 use lazy_static::lazy_static;
+use rand::distributions::Uniform;
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
+use rand::{thread_rng, Rng};
+use sha2::{Digest, Sha512};
 use std::collections::*;
 use std::fmt;
-use tui::widgets::Row;
+use std::os::windows::thread;
 
 use super::*;
 
@@ -130,6 +133,8 @@ impl<'a> DoubleEndedIterator for RowIter<'a> {
     }
   }
 }
+
+impl<'a> ExactSizeIterator for RowIter<'a> {}
 
 impl GameField {
   pub fn new(rows: u64, cols: u64) -> Self {
@@ -276,26 +281,97 @@ impl Direction {
       Ok(())
     }
   }
+
+  pub const fn all_directions_cw() -> &'static [&Direction] {
+    static DIRS: [&Direction] = [
+      Direction::UP,
+      Direction::UP | Direction::RIGHT,
+      Direction::RIGHT,
+      Direction::RIGHT | Direction::DOWN,
+      Direction::DOWN,
+      Direction::DOWN | Direction::LEFT,
+      Direction::LEFT,
+      Direction::LEFT | Direction::UP,
+    ];
+    return &DIRS;
+  }
 }
 
+#[derive(Clone, Default)]
+pub struct GameMeta {
+  pub version: Option<u64>,
+  pub seed: Option<String>,
+  pub name: String,
+  pub utc_started_ms: Option<u64>,
+  pub difficulty_map: Option<DifficultyMap>,
+}
+
+#[derive(Clone)]
 pub struct Greed {
+  meta: GameMeta,
   field: GameField,
 }
 
 impl Greed {
-  pub fn new(size: Pos, difficulty_map: DifficultyMap) -> Self {}
-  pub fn field(&self) -> &GameField {}
-  pub fn move_(&mut self, dir: Direction) -> Result<(), GreedError> {}
+  pub fn new(size: Pos, mut game_meta: GameMeta) -> Self {
+    if (game_meta.seed.is_none()) {
+      let mut thread_rng = thread_rng();
+      let uniform = Uniform::new_inclusive('A', 'Z');
+      let random_string = (0..512)
+        .map(|_| thread_rng.sample(uniform))
+        .collect::<String>();
+      game_meta.seed = Some(random_string);
+    }
+    let string_seed = &game_meta.seed.unwrap();
+    let mut hasher = Sha512::new();
+    hasher.update(string_seed);
+    let result = hasher.finalize();
+
+    let rng = rand_pcg::Pcg64Mcg::from_seed(result);
+    let tile_chooser = TileChooser();
+    Self {
+      meta: game_meta,
+      field: GameField {
+        vec: (),
+        x_size: (),
+        y_size: (),
+      },
+    }
+  }
+  pub fn game_meta(&self) -> &GameMeta {
+    &self.meta
+  }
+  pub fn field(&self) -> &GameField {
+    &self.field
+  }
+  fn _move(&mut self, dir: Direction, consume: bool) -> Result<[Pos], GreedError> {}
+  /// Returns the positions that were consumed.
+  /// They are in order from the closest to the furtherest.
+  pub fn move_(&mut self, dir: Direction) -> Result<[Pos], GreedError> {}
+  /// Returns the positions that would be consumed.
+  /// They are in order from the closest to the furtherest.
+  /// # Examples
+  /// ```
+  /// use greed::*;
+  ///
+  /// let game = Greed::new(...);
+  /// let move_score = game.check_move(dir).len();
+  /// ```
+  pub fn check_move(&mut self, dir: Direction) -> Result<[Pos], GreedError> {}
+  pub fn score() -> u128 {}
+  pub fn time_played() -> std::time::Duration {}
 }
 
 impl TryFrom<String> for Greed {
   type Error = GameFieldParserError;
 
   fn try_from(value: String) -> Result<Self, Self::Error> {
-    todo!()
+    todo!("Load game meta")
   }
 }
 
 impl Into<String> for Greed {
-  fn into(self) -> String {}
+  fn into(self) -> String {
+    todo!("Save game meta")
+  }
 }
