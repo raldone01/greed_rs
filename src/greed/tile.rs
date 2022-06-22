@@ -1,6 +1,9 @@
 use num_enum::TryFromPrimitive;
+use serde::{
+  de::{self, Visitor},
+  Deserialize, Deserializer, Serialize,
+};
 use std::fmt;
-use thiserror::Error;
 
 use super::*;
 
@@ -20,6 +23,41 @@ pub enum Tile {
   Player,
 }
 
+impl Serialize for Tile {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    serializer.serialize_char(char::from(*self))
+  }
+}
+
+struct TileVisitor;
+
+impl<'de> Visitor<'de> for TileVisitor {
+  type Value = Tile;
+
+  fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    formatter.write_str("one of 0123456789 @")
+  }
+
+  fn visit_char<E>(self, v: char) -> Result<Self::Value, E>
+  where
+    E: de::Error,
+  {
+    Tile::try_from(v).map_err(|err| E::custom(err.to_string()))
+  }
+}
+
+impl<'de> Deserialize<'de> for Tile {
+  fn deserialize<D>(deserializer: D) -> Result<Tile, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    deserializer.deserialize_char(TileVisitor)
+  }
+}
+
 impl Tile {
   pub const EMPTY: Tile = Tile::V0;
 
@@ -36,17 +74,20 @@ impl Tile {
   }
 
   pub fn is_empty(self) -> bool {
-    self == Tile::Empty
+    self == Tile::EMPTY
   }
 }
 
 impl From<Tile> for char {
   fn from(tile: Tile) -> Self {
     match tile {
-      Player => '@',
+      Tile::Player => '@',
       // V0 => ' ', Handled in the display function
       // x if let Some(amount) = self.amount() => { Ok(()) } Unstable damn
-      _ => tile.amount().map(|a| char::from_digit(a, 10)).unwrap(),
+      _ => tile
+        .amount()
+        .map(|a| char::from_digit(a as u32, 10).unwrap())
+        .unwrap(),
     }
   }
 }
@@ -68,7 +109,7 @@ impl TryFrom<char> for Tile {
 
 impl fmt::Display for Tile {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let mut c: char = self.into();
+    let mut c = char::from(*self);
     if c == '0' {
       c = ' ';
     }

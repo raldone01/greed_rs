@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Pos {
   pub x: usize,
   pub y: usize,

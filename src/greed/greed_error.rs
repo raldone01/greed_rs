@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use super::*;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum GreedError {
   #[error("Invalid direction")]
   InvalidDirection,
@@ -12,7 +12,7 @@ pub enum GreedError {
   GameComplete,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum GameFieldParserError {
   #[error("Player not found on the game field")]
   PlayerNotFound,
@@ -24,15 +24,19 @@ pub enum GameFieldParserError {
   NotRectangular,
   #[error("Game field contains empty lines! THIS IS NOT OK!")]
   EmptyLine,
+  #[error("Invalid meta data")]
+  InvalidMetaData { cause: json5::Error },
+  #[error("No trailing new line")]
+  NoTrailingNewLine,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 #[error("Invalid character ({found:})")]
 pub struct TileParseError {
-  found: char,
+  pub found: char,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum InternalGreedError {
   #[error("Index out of bounds")]
   IndexOutOfBounds,
