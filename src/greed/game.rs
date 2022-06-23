@@ -1,5 +1,3 @@
-use bitflags::bitflags;
-use lazy_static::lazy_static;
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -7,44 +5,6 @@ use serde_with::{serde_as, skip_serializing_none};
 use sha2::{Digest, Sha512};
 
 use super::*;
-
-bitflags! {
-  pub struct Direction: u8 {
-    const UP    = 0b00000001;
-    const DOWN  = 0b00000010;
-    const LEFT  = 0b00000100;
-    const RIGHT = 0b00001000;
-  }
-}
-
-impl Direction {
-  pub fn valid(self) -> Result<(), GreedError> {
-    let invalid = (self == (Direction::UP | Direction::DOWN))
-      || (self == (Direction::LEFT | Direction::RIGHT))
-      || (self.is_empty());
-    if invalid {
-      Err(GreedError::InvalidDirection)
-    } else {
-      Ok(())
-    }
-  }
-
-  pub fn all_directions_cw() -> &'static [Direction; 8] {
-    lazy_static! { // sad that rust can evaluate bitflags | at compile time
-      static ref DIRS: [Direction; 8] = [
-      Direction::UP,
-      Direction::UP | Direction::RIGHT,
-      Direction::RIGHT,
-      Direction::RIGHT | Direction::DOWN,
-      Direction::DOWN,
-      Direction::DOWN | Direction::LEFT,
-      Direction::LEFT,
-      Direction::LEFT | Direction::UP,
-    ];
-    }
-    return &DIRS;
-  }
-}
 
 #[serde_as]
 #[skip_serializing_none]
@@ -60,9 +20,9 @@ pub struct GameMeta {
   #[serde(default)]
   #[serde_as(as = "Option<Vec<(_, _)>>")]
   pub difficulty_map: Option<DifficultyMap>,
+  pub moves: Option<Vec<Direction>>,
+  pub score: Option<usize>,
 }
-
-type TileAndPos = (Pos, Tile);
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
@@ -71,7 +31,7 @@ pub struct Greed {
 }
 
 impl Greed {
-  pub fn new(size: Pos, mut game_meta: GameMeta) -> Self {
+  pub fn new(x_size: usize, y_size: usize, mut game_meta: GameMeta) -> Self {
     game_meta.greed_version = Some(1);
     game_meta.file_version.get_or_insert(1);
 
@@ -97,12 +57,13 @@ impl Greed {
     let hash = hasher.finalize();
     let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash); // init the random gen with the first 16 bytes of the hash
+    #[allow(clippy::or_fun_call)] // TODO: Create an issue
     let diff_map = game_meta
       .difficulty_map
       .as_ref()
       .unwrap_or(DifficultyMap::default_difficulties());
-    let mut tile_chooser = TileChooser::new(&mut rng, &diff_map);
-    let mut game_field = GameField::new_empty(size.x, size.y);
+    let mut tile_chooser = TileChooser::new(&mut rng, diff_map);
+    let mut game_field = GameField::new_empty(x_size, y_size);
     game_field.randomize_field(&mut tile_chooser);
 
     Self {
@@ -115,9 +76,6 @@ impl Greed {
   }
   pub fn field(&self) -> &GameField {
     &self.field
-  }
-  fn _move(&mut self, dir: Direction, consume: bool) -> Result<Vec<TileAndPos>, GreedError> {
-    todo!()
   }
   /// Returns the positions that were consumed.
   /// They are in order from the closest to the farthest.
@@ -133,13 +91,13 @@ impl Greed {
   /// let game = Greed::new(...);
   /// let move_score = game.check_move(dir).len();
   /// ```
-  pub fn check_move(&mut self, dir: Direction) -> Result<Vec<TileAndPos>, GreedError> {
-    todo!()
-  }
-  pub fn score() -> u128 {
+  pub fn check_move(&mut self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {
     todo!()
   }
   pub fn time_played() -> std::time::Duration {
+    todo!()
+  }
+  pub fn validate_replay(game_meta: &GameMeta) {
     todo!()
   }
 }
@@ -160,7 +118,7 @@ impl TryFrom<&str> for Greed {
       json5::from_str::<GameMeta>(
         value
           .get(0..meta_end_pos)
-          .ok_or_else(|| GameFieldParserError::EmptyLine)?,
+          .ok_or(GameFieldParserError::EmptyLine)?,
       )
       .map_err(|cause| GameFieldParserError::InvalidMetaData { cause })?
     } else {
@@ -174,9 +132,9 @@ impl TryFrom<&str> for Greed {
   }
 }
 
-impl Into<String> for Greed {
-  fn into(self) -> String {
-    let out = String::with_capacity(1024 + self.field.tile_count());
+impl From<Greed> for String {
+  fn from(greed: Greed) -> Self {
+    let out = String::with_capacity(1024 + greed.field.tile_count());
     todo!("Save game meta then write game field")
   }
 }

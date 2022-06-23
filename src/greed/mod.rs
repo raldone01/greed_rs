@@ -1,7 +1,7 @@
-mod greed;
+mod game;
 #[allow(unused_imports)]
-use greed::*;
-pub use greed::{Direction, GameMeta, Greed};
+use game::*;
+pub use game::{GameMeta, Greed};
 
 pub mod greed_error;
 /// Make errors available internally
@@ -14,11 +14,14 @@ mod pos;
 pub use pos::Pos;
 
 mod game_field;
-pub use game_field::GameField;
+pub use game_field::{GameField, TileAndIndex};
 
 mod tile_chooser;
 /// Internal
 use tile_chooser::*;
+
+mod direction;
+pub use direction::Direction;
 
 #[cfg(test)]
 mod test;

@@ -8,29 +8,29 @@ pub type DifficultyMap = HashMap<Tile, f64>;
 
 pub trait DifficultyMapExt {
   /// TODO remove
-  fn saturate_difficulties<'a>(&'a mut self) -> &'a Self;
+  fn saturate_difficulties(&mut self) -> &Self;
   /// TODO rename to calculate_percentages
-  fn normalize_difficulties<'a>(&'a mut self) -> &'a Self;
+  fn normalize_difficulties(&mut self) -> &Self;
   fn default_difficulties() -> &'static Self;
   fn new_difficulty_map() -> Self;
 }
 
 impl DifficultyMapExt for DifficultyMap {
-  fn saturate_difficulties<'a>(&'a mut self) -> &'a Self {
+  fn saturate_difficulties(&mut self) -> &Self {
     let default = DifficultyMap::default_difficulties();
-    for tile in default.iter() {
-      if self.keys().find(|&ex_key| ex_key == tile.0).is_none() {
-        self.insert(*tile.0, *tile.1);
+    for (&tile, &prob) in default.iter() {
+      if !self.keys().any(|&ex_key| ex_key == tile) {
+        self.insert(tile, prob);
       }
     }
-    return self;
+    self
   }
-  fn normalize_difficulties<'a>(&'a mut self) -> &'a Self {
+  fn normalize_difficulties(&mut self) -> &Self {
     let total_probabilities = self.values().fold(0_f64, |accu, prob| accu + prob);
     for value in self.values_mut() {
       *value /= total_probabilities;
     }
-    return self;
+    self
   }
   /// Equal distribution by default
   fn default_difficulties() -> &'static Self {
@@ -49,7 +49,7 @@ impl DifficultyMapExt for DifficultyMap {
       (Tile::V8, PROB),
       (Tile::V9, PROB),]);
     }
-    return &MAP;
+    &MAP
   }
   fn new_difficulty_map() -> Self {
     DifficultyMap::default_difficulties().clone()
@@ -83,6 +83,6 @@ impl<'rng, RNG: Rng> TileChooser<'rng, RNG> {
   pub fn choose(&mut self) -> Tile {
     let weights = self.difficulty_map.iter().map(|(_, v)| v);
     let dist = WeightedIndex::new(weights).unwrap();
-    return self.difficulty_map[dist.sample(self.rng)].0;
+    self.difficulty_map[dist.sample(self.rng)].0
   }
 }
