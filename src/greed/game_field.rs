@@ -178,6 +178,8 @@ impl<'a> GameState<'a> {
     dir.valid()?;
     dir = !dir; // invert the direction bit flag magic
 
+    // Store last move dir and amount in the game_state?
+
     todo!()
   }
 }
