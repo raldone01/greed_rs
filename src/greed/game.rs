@@ -22,6 +22,10 @@ pub struct GameMeta {
   pub difficulty_map: Option<DifficultyMap>,
   pub moves: Option<Vec<Direction>>,
   pub score: Option<usize>,
+  /// A score based on time spent, moves (counting undos) and a few more factors.
+  /// This value can't be verified and is designed to increase human engagement.
+  /// TODO: Maybe also store average_move_time.
+  pub human_score: Option<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
