@@ -18,16 +18,22 @@ bitflags! {
 }
 
 impl Direction {
+  pub fn is_valid(self) -> bool {
+    let valid = (self.contains(Direction::UP) ^ self.contains(Direction::DOWN))
+      | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT));
+    // let invalid = self.reduce().is_empty();
+    valid
+  }
+
   pub fn valid(self) -> Result<(), GreedError> {
-    let invalid = self.reduce().is_empty();
-    if invalid {
-      Err(GreedError::InvalidDirection)
-    } else {
+    if self.is_valid() {
       Ok(())
+    } else {
+      Err(GreedError::InvalidDirection)
     }
   }
 
-  // disambiguates a direction
+  /// disambiguates a direction
   pub fn reduce(mut self) -> Self {
     if self.contains(Direction::UP | Direction::DOWN) {
       self ^= Direction::UP | Direction::DOWN;
@@ -38,13 +44,13 @@ impl Direction {
     self
   }
 
-  // Same as !dir
+  /// Same as !dir
   pub fn reverse(self) -> Self {
     !self
   }
 
   pub fn all_directions_cw() -> &'static [Direction; 8] {
-    lazy_static! { // sad that rust can evaluate bitflags | at compile time
+    lazy_static! { // sad that rust can't evaluate bitflags | at compile time
       static ref DIRS: [Direction; 8] = [
       Direction::UP,
       Direction::UP | Direction::RIGHT,

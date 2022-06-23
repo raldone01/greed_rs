@@ -1,3 +1,4 @@
+use bitvec::prelude as bv;
 use rand::prelude::*;
 use std::{
   fmt::{Debug, Display, Write},
@@ -5,14 +6,180 @@ use std::{
   ops::Index,
   slice::SliceIndex,
 };
+use thiserror::Error;
 
 use super::*;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct FakeTile {
+  amount: u8,
+}
+
+impl FakeTile {
+  const EMTPY: FakeTile = FakeTile { amount: 0 };
+
+  pub fn amount(self) -> u8 {
+    self.amount
+  }
+}
+
+#[derive(Error, Debug, PartialEq)]
+#[error("Can't convert player Tile to FakeTile")]
+pub struct FakeTileConversionError {}
+
+impl TryFrom<Tile> for FakeTile {
+  type Error = FakeTileConversionError;
+
+  fn try_from(value: Tile) -> Result<Self, Self::Error> {
+    let amount = value.amount().ok_or(FakeTileConversionError {})?;
+    Ok(FakeTile { amount })
+  }
+}
+
+impl From<FakeTile> for Tile {
+  fn from(fake_tile: FakeTile) -> Self {
+    Tile::try_from(fake_tile.amount).unwrap()
+  }
+}
+
+impl Debug for FakeTile {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(f, "{:?}", Tile::from(*self))
+  }
+}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameField {
-  vec: Vec<Tile>,
+  vec: Box<[FakeTile]>,
   x_size: usize,
   y_size: usize,
+  /// initial player_pos
+  player_pos: Pos,
+}
+
+type Amount = u8;
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct GameState<'a> {
+  mask: bv::BitVec,
+  player_pos: Pos,
+  moves: Vec<(Direction, Amount)>,
+  game_field: &'a GameField,
+}
+
+impl<'a> GameState<'a> {
+  pub fn new(game_field: &'a GameField) -> Self {
+    let player_pos = game_field.player_pos;
+    let player_index = game_field.pos_to_index(player_pos).unwrap();
+    let mask = bv::BitVec::with_capacity(game_field.tile_count());
+    mask.fill(true);
+    mask[player_index] = false;
+
+    Self {
+      mask,
+      game_field,
+      moves: Vec::new(),
+      player_pos,
+    }
+  }
+
+  /// TODO TRAITIFY POS_TRAIT
+  pub fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    self.game_field.valid_pos(pos)
+  }
+
+  /// TODO TRAITIFY POS_TRAIT
+  pub fn pos_to_index(&self, pos: Pos) -> Option<usize> {
+    self.game_field.pos_to_index(pos)
+  }
+
+  /// TODO TRAITIFY POS_TRAIT
+  pub fn index_to_pos(&self, index: usize) -> Pos {
+    self.game_field.index_to_pos(index)
+  }
+
+  pub fn game_field(&self) -> &'a GameField {
+    self.game_field
+  }
+
+  fn get_fake_unchecked(&self, index: usize) -> FakeTile {
+    if self.mask[index] == false {
+      FakeTile { amount: 0 }
+    } else {
+      self.game_field.vec[index]
+    }
+  }
+
+  pub fn check_move(&self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {
+    let game_field = self.game_field;
+
+    let mut current_pos = self.player_pos + dir;
+    // check if position was valid - is the same as calling dir.valid() obviously
+    if current_pos == self.player_pos {
+      return Err(GreedError::InvalidDirection);
+    }
+
+    let starting_index = game_field
+      .pos_to_index(current_pos)
+      .ok_or(GreedError::BadMove)?;
+    // The first tile the player moves to
+    // Tells us how many tiles to move
+    let starting_tile = self.get_fake_unchecked(starting_index);
+    if starting_tile == FakeTile::EMTPY {
+      return Err(GreedError::BadMove);
+    }
+    let move_amount = starting_tile.amount();
+
+    // TODO: try_collect
+
+    let mut moves = Vec::with_capacity(move_amount.into());
+    moves.push((
+      // TODO: pos_to_index_unchecked 🙃
+      game_field.pos_to_index(self.player_pos).unwrap(),
+      Tile::Player,
+    ));
+    moves.push((starting_index, Tile::from(starting_tile)));
+    // collect positions and check for collision -> BadMove
+    for _ in 0..move_amount - 1 {
+      current_pos += dir;
+      let index = game_field
+        .pos_to_index(current_pos)
+        .ok_or(GreedError::BadMove)?;
+      let tile = self.get_fake_unchecked(index);
+      if tile == FakeTile::EMTPY {
+        return Err(GreedError::BadMove);
+      }
+      moves.push((index, Tile::from(tile)))
+    }
+
+    // return movements
+    Ok(moves)
+  }
+
+  pub fn move_(
+    &mut self,
+    game_field: &GameField,
+    dir: Direction,
+  ) -> Result<Vec<TileAndIndex>, GreedError> {
+    // commit movements
+    let moves = game_field.check_move(dir)?;
+
+    let mut iter = moves.iter().rev();
+    // If check_move is successful the returned vec contains at least one element
+    let &(player_index, _) = iter.next().unwrap();
+    self.player_pos = self.index_to_pos(player_index);
+    for &(index, _) in iter {
+      self.mask[index] = false
+    }
+    Ok(moves)
+  }
+
+  pub fn undo_move(&mut self, mut dir: Direction, amount: u8) -> Result<(), GreedError> {
+    dir.valid()?;
+    dir = !dir; // invert the direction bit flag magic
+
+    todo!()
+  }
 }
 
 pub struct RowIter<'a> {
@@ -149,35 +316,7 @@ impl GameField {
     )
   }
 
-  pub fn check_move(&self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {
-    let player = self.locate_player();
-    let mut current_pos = player + dir;
-    let starting_index = self.pos_to_index(current_pos).ok_or(GreedError::BadMove)?;
-    let starting_tile = self[starting_index];
-    if starting_tile == Tile::EMPTY {
-      return Err(GreedError::BadMove);
-    }
-    let move_amount = starting_tile.amount().ok_or(GreedError::InvalidDirection)?;
-
-    // TODO: try_collect
-
-    let mut moves = Vec::with_capacity(move_amount.into());
-    moves.push((self.pos_to_index(player).unwrap(), Tile::Player));
-    moves.push((starting_index, starting_tile));
-    // collect positions and check for collision -> BadMove
-    for _ in 0..move_amount - 1 {
-      current_pos += dir;
-      let index = self.pos_to_index(current_pos).ok_or(GreedError::BadMove)?;
-      let tile = self[index];
-      if tile == Tile::EMPTY {
-        return Err(GreedError::BadMove);
-      }
-      moves.push((index, tile))
-    }
-
-    // return movements
-    Ok(moves)
-  }
+  pub fn check_move(&self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {}
 
   pub fn move_(&mut self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {
     // commit movements

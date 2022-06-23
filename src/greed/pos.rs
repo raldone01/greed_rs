@@ -11,6 +11,18 @@ pub struct Pos {
   pub y: isize,
 }
 
+impl From<Pos> for (isize, isize) {
+  fn from(pos: Pos) -> Self {
+    (pos.x, pos.y)
+  }
+}
+
+impl From<(isize, isize)> for Pos {
+  fn from((x, y): (isize, isize)) -> Self {
+    Pos { x, y }
+  }
+}
+
 impl Add<Direction> for Pos {
   type Output = Pos;
 
