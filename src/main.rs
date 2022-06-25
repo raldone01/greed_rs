@@ -21,8 +21,8 @@ fn main() {
   let mut field = greed::GameField::try_from("1034@\n17817\n").unwrap();
   println!("FIELD:\n{}", field);
 
-  field
-    .move_(greed::Direction::DOWN | greed::Direction::LEFT)
-    .unwrap();
+  /* field
+  .move_(greed::Direction::DOWN | greed::Direction::LEFT)
+  .unwrap(); */
   println!("FIELD:\n{}", field);
 }

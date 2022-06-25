@@ -95,7 +95,7 @@ impl Greed {
   /// let game = Greed::new(...);
   /// let move_score = game.check_move(dir).len();
   /// ```
-  pub fn check_move(&mut self, dir: Direction) -> Result<Vec<TileAndIndex>, GreedError> {
+  pub fn check_move(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     todo!()
   }
   pub fn time_played() -> std::time::Duration {
