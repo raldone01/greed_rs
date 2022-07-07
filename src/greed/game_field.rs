@@ -66,6 +66,145 @@ pub trait TileGet<I> {
   fn get(&self, index: I) -> Option<&Tile>;
 }
 
+/// TODO: Use generics to remove two of the three usizes with an enum to disambiguate row or col iter at compile time.
+pub struct StrideTileIterator<'a, T: TileGrid + ?Sized> {
+  pos: usize,
+  stride: usize,
+  end: usize,
+  grid: &'a T,
+}
+impl<'a, T: TileGrid + ?Sized> Iterator for StrideTileIterator<'a, T> {
+  type Item = Tile;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let pos = self.pos;
+    if pos < self.end {
+      self.pos = pos + self.stride;
+      Some(self.grid[pos])
+    } else {
+      None
+    }
+  }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let (x_size, y_size) = self.grid.dimensions();
+    let size = if self.stride == 1 { x_size } else { y_size };
+    (size, Some(size))
+  }
+}
+impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for StrideTileIterator<'a, T> {
+  fn next_back(&mut self) -> Option<Self::Item> {
+    let pos = self.pos;
+    if pos > 0 {
+      self.pos = pos - self.stride;
+      Some(self.grid[pos])
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a, T: TileGrid + ?Sized> FusedIterator for StrideTileIterator<'a, T> {}
+impl<'a, T: TileGrid + ?Sized> ExactSizeIterator for StrideTileIterator<'a, T> {}
+
+pub struct ColIterator<'a, T: TileGrid + ?Sized> {
+  col: usize,
+  grid: &'a T,
+}
+impl<'a, T: TileGrid + ?Sized> Iterator for ColIterator<'a, T> {
+  type Item = StrideTileIterator<'a, T>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let col = self.col;
+    let (x_size, y_size) = self.grid.dimensions();
+    if col < x_size {
+      self.col = col + 1;
+      Some(StrideTileIterator {
+        pos: col,
+        stride: x_size,
+        end: y_size * x_size, // col + 1 + (y_size - 1) * x_size,
+        grid: self.grid,
+      })
+    } else {
+      None
+    }
+  }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let (x_size, _y_size) = self.grid.dimensions();
+    (x_size, Some(x_size))
+  }
+}
+impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for ColIterator<'a, T> {
+  fn next_back(&mut self) -> Option<Self::Item> {
+    let col = self.col;
+    let (x_size, y_size) = self.grid.dimensions();
+    if col > 0 {
+      self.col = col - 1;
+      Some(StrideTileIterator {
+        pos: col,
+        stride: x_size,
+        end: y_size * x_size, // col + 1 + (y_size - 1) * x_size,
+        grid: self.grid,
+      })
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a, T: TileGrid + ?Sized> FusedIterator for ColIterator<'a, T> {}
+impl<'a, T: TileGrid + ?Sized> ExactSizeIterator for ColIterator<'a, T> {}
+
+pub struct RowIterator<'a, T: TileGrid + ?Sized> {
+  offset: usize,
+  grid: &'a T,
+}
+impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
+  type Item = StrideTileIterator<'a, T>;
+
+  fn next(&mut self) -> Option<Self::Item> {
+    let offset = self.offset;
+    let (x_size, _y_size) = self.grid.dimensions();
+    if offset < self.grid.tile_count() {
+      self.offset = offset + x_size;
+      Some(StrideTileIterator {
+        pos: offset,
+        stride: 1,
+        end: offset + x_size,
+        grid: self.grid,
+      })
+    } else {
+      None
+    }
+  }
+
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let (_x_size, y_size) = self.grid.dimensions();
+    (y_size, Some(y_size))
+  }
+}
+impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for RowIterator<'a, T> {
+  fn next_back(&mut self) -> Option<Self::Item> {
+    let offset = self.offset;
+    let (x_size, _y_size) = self.grid.dimensions();
+    if offset > 0 {
+      self.offset = offset - x_size;
+      Some(StrideTileIterator {
+        pos: offset - x_size,
+        stride: 1,
+        end: offset,
+        grid: self.grid,
+      })
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a, T: TileGrid + ?Sized> FusedIterator for RowIterator<'a, T> {}
+impl<'a, T: TileGrid + ?Sized> ExactSizeIterator for RowIterator<'a, T> {}
+
 pub struct TileIterator<'a, T: TileGrid + ?Sized> {
   start: usize,
   end: usize,
@@ -155,7 +294,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + TileIndex<Pos> + TileIndex<u
     Pos { x, y }
   }
 
-  fn tile_iter<'a>(&'a self) -> TileIterator<'a, Self> {
+  fn iter<'a>(&'a self) -> TileIterator<'a, Self> {
     TileIterator {
       start: 0,
       end: self.tile_count(),
@@ -163,8 +302,19 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + TileIndex<Pos> + TileIndex<u
     }
   }
 
+  fn cols<'a>(&'a self) -> ColIterator<'a, Self> {
+    ColIterator { col: 0, grid: self }
+  }
+
+  fn rows<'a>(&'a self) -> RowIterator<'a, Self> {
+    RowIterator {
+      offset: 0,
+      grid: self,
+    }
+  }
+
   fn score(&self) -> usize {
-    self.tile_iter().fold(
+    self.iter().fold(
       0,
       |accu, item| {
         if item == Tile::EMPTY {
@@ -175,10 +325,12 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + TileIndex<Pos> + TileIndex<u
       },
     )
   }
+
+  fn player_pos(&self) -> Pos;
 }
 
 /// This mutable structure represents a modified game field.
-/// It encodes which fields have been consumed and where the player pos.
+/// It encodes which fields have been consumed and the player pos.
 #[derive(Clone, PartialEq, Eq)]
 pub struct GameState<'a> {
   /// If a tile has a false mask it should be considered as an empty tile.
@@ -204,19 +356,6 @@ impl<'a> GameState<'a> {
       moves: Vec::new(),
       player_pos,
     }
-  }
-
-  pub fn valid_pos(&self, pos: Pos) -> Option<Pos> {
-    todo!()
-    // self.game_field.valid_pos(pos)
-  }
-
-  pub fn pos_to_index(&self, pos: Pos) -> Option<usize> {
-    self.game_field.pos_to_index(pos)
-  }
-
-  pub fn index_to_pos(&self, index: usize) -> Pos {
-    self.game_field.index_to_pos(index)
   }
 
   pub fn game_field(&self) -> &'a GameField {
@@ -320,6 +459,16 @@ impl<'a> GameState<'a> {
     self.player_pos += dir;
 
     Ok(())
+  }
+}
+
+impl TileGrid for GameField {
+  fn dimensions(&self) -> (usize, usize) {
+    (self.x_size, self.y_size)
+  }
+
+  fn player_pos(&self) -> Pos {
+    self.player_pos
   }
 }
 
