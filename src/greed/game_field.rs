@@ -67,7 +67,8 @@ pub trait TileGet<I> {
 }
 
 pub struct TileIterator<'a, T: TileGrid + ?Sized> {
-  index: usize,
+  start: usize,
+  end: usize,
   grid: &'a T,
 }
 
@@ -75,9 +76,9 @@ impl<'a, T: TileGrid + ?Sized> Iterator for TileIterator<'a, T> {
   type Item = Tile;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let index = self.index;
-    if index < self.grid.tile_count() {
-      self.index = index + 1;
+    let index = self.start;
+    if index < self.end {
+      self.start = index + 1;
       Some(self.grid[index])
     } else {
       None
@@ -85,16 +86,15 @@ impl<'a, T: TileGrid + ?Sized> Iterator for TileIterator<'a, T> {
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let count = self.grid.tile_count();
-    (count, Some(count))
+    let remaining = self.end - self.start;
+    (remaining, Some(remaining))
   }
 }
 impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for TileIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
-    let index = self.index;
-    if index > 0 {
-      self.index = index - 1;
-      Some(self.grid[index])
+    if self.start < self.end {
+      self.end -= 1;
+      Some(self.grid[self.end])
     } else {
       None
     }
@@ -157,7 +157,8 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + TileIndex<Pos> + TileIndex<u
 
   fn tile_iter<'a>(&'a self) -> TileIterator<'a, Self> {
     TileIterator {
-      index: 0,
+      start: 0,
+      end: self.tile_count(),
       grid: self,
     }
   }
