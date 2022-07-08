@@ -2,8 +2,6 @@ use super::*;
 use bitvec::prelude as bv;
 use std::rc::Rc;
 
-pub type Amount = u8;
-
 /// This mutable structure represents a modified game field.
 /// It encodes which fields have been consumed and the player pos.
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -38,6 +36,8 @@ impl GameState {
   }
 
   fn get_fake_unchecked(&self, index: usize) -> FakeTile {
+    #[allow(clippy::bool_comparison)]
+    // self.mask[index] == false is purposefully used over !self.mask[index] i
     if self.mask[index] == false {
       FakeTile::EMTPY
     } else {
@@ -114,7 +114,7 @@ impl GameState {
     self
       .moves
       // TODO: unwrap_unchecked
-      .push((dir, u8::try_from(moves.len() - 1).unwrap()));
+      .push((dir, Amount::try_from(moves.len() - 1).unwrap()));
     Ok(moves)
   }
 
@@ -125,7 +125,7 @@ impl GameState {
     let dir = !dir; // invert the direction bit flag magic
 
     // 1..amount because we don't want to uncheck the player
-    for _ in 1..amount {
+    for _ in 1..amount.amount() {
       let index = self.pos_to_index(self.player_pos).unwrap(); // TODO: unsafe_unwrap
       self.mask.set(index, true);
       self.player_pos += dir;

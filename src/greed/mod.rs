@@ -38,6 +38,10 @@ mod fake_tile;
 /// Internal
 use fake_tile::FakeTile;
 
+mod amount;
+/// Internal (Might be made public when needed)
+use amount::Amount;
+
 mod direction;
 pub use direction::Direction;
 

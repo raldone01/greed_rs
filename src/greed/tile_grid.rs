@@ -234,7 +234,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     Pos::new(x, y)
   }
 
-  fn iter<'a>(&'a self) -> TileIterator<'a, Self> {
+  fn iter(&self) -> TileIterator<Self> {
     TileIterator {
       start: 0,
       end: self.tile_count(),
@@ -242,7 +242,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     }
   }
 
-  fn cols<'a>(&'a self) -> ColIterator<'a, Self> {
+  fn cols(&self) -> ColIterator<Self> {
     let (x_size, y_size) = self.dimensions();
     ColIterator {
       start_col: 0,
@@ -251,7 +251,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     }
   }
 
-  fn rows<'a>(&'a self) -> RowIterator<'a, Self> {
+  fn rows(&self) -> RowIterator<Self> {
     RowIterator {
       offset: 0,
       end: self.tile_count(),

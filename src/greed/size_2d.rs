@@ -2,19 +2,15 @@ use std::num::TryFromIntError;
 
 use super::*;
 
+#[non_exhaustive]
 pub struct Size2D {
   pub x_size: usize,
   pub y_size: usize,
-  _phantom: (),
 }
 
 impl Size2D {
   pub fn new(x_size: usize, y_size: usize) -> Self {
-    Self {
-      x_size,
-      y_size,
-      _phantom: (),
-    }
+    Self { x_size, y_size }
   }
 }
 

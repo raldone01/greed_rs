@@ -1,9 +1,5 @@
 use rand::prelude::*;
-use std::{
-  fmt::{Debug, Display},
-  iter::FusedIterator,
-};
-use thiserror::Error;
+use std::fmt::{Debug, Display};
 
 use super::*;
 
@@ -91,8 +87,7 @@ impl TryFrom<&str> for GameField {
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let default_size = GameField::default_classic_game_dimensions();
-    let mut vec =
-      Vec::with_capacity(usize::try_from(default_size.x_size * default_size.y_size).unwrap());
+    let mut vec = Vec::with_capacity(default_size.x_size * default_size.y_size);
 
     let mut x_size = None;
     let mut x_pos = 0;

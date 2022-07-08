@@ -1,20 +1,20 @@
 use std::{
   fmt,
-  ops::{Add, AddAssign, Sub, SubAssign},
+  ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
 
 use super::Direction;
 
+#[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Pos {
   pub x: isize,
   pub y: isize,
-  _phantom: (),
 }
 
 impl Pos {
   pub fn new(x: isize, y: isize) -> Self {
-    Pos { x, y, _phantom: () }
+    Pos { x, y }
   }
 }
 
@@ -67,18 +67,26 @@ impl AddAssign for Pos {
   }
 }
 
+impl Neg for Pos {
+  type Output = Pos;
+
+  fn neg(self) -> Self::Output {
+    Pos::new(-self.x, -self.y)
+  }
+}
+
 impl Sub for Pos {
   type Output = Pos;
 
   fn sub(self, rhs: Self) -> Self::Output {
-    Pos::new(self.x - rhs.x, self.y - rhs.y)
+    self + rhs.neg()
+    // self + -rhs
   }
 }
 
 impl SubAssign for Pos {
   fn sub_assign(&mut self, rhs: Self) {
-    self.x -= rhs.x;
-    self.y -= rhs.y;
+    *self += -rhs;
   }
 }
 

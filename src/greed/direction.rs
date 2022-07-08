@@ -19,10 +19,12 @@ bitflags! {
 
 impl Direction {
   pub fn is_valid(self) -> bool {
-    let valid = (self.contains(Direction::UP) ^ self.contains(Direction::DOWN))
-      | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT));
-    // let invalid = self.reduce().is_empty();
-    valid
+    // Previous Impl:
+    //  let invalid = self.reduce().is_empty();
+    //  !invalid
+
+    (self.contains(Direction::UP) ^ self.contains(Direction::DOWN))
+      | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT))
   }
 
   pub fn valid(self) -> Result<(), GreedError> {
@@ -114,7 +116,7 @@ impl<'de> Visitor<'de> for DirectionVisitor {
   where
     E: de::Error,
   {
-    Direction::from_bits(v).ok_or(E::custom("Invalid direction"))
+    Direction::from_bits(v).ok_or_else(|| E::custom("Invalid direction"))
   }
 }
 
