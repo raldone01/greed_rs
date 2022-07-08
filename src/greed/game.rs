@@ -85,9 +85,6 @@ impl Greed {
   pub fn game_meta(&self) -> &GameMeta {
     &self.meta
   }
-  pub fn field(&self) -> &GameField {
-    &self.field
-  }
   /// Returns the positions that were consumed.
   /// They are in order from the closest to the farthest.
   pub fn move_(&mut self, dir: Direction) -> Result<Vec<Pos>, GreedError> {
@@ -113,7 +110,22 @@ impl Greed {
   }
 }
 
-impl Playable for Greed {}
+impl Playable for Greed {
+  fn game_field(&self) -> &GameField {
+    &self.state.game_field()
+  }
+  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+    todo!()
+  }
+
+  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+    todo!()
+  }
+
+  fn undo_move(&mut self) -> Result<(), GreedError> {
+    todo!()
+  }
+}
 
 impl TryFrom<&str> for Greed {
   type Error = GameFieldParserError;
@@ -148,7 +160,7 @@ impl TryFrom<&str> for Greed {
 
 impl From<Greed> for String {
   fn from(greed: Greed) -> Self {
-    let out = String::with_capacity(1024 + greed.field.tile_count());
+    let out = String::with_capacity(1024 + greed.game_field.tile_count());
     todo!("Save game meta then write game field")
   }
 }

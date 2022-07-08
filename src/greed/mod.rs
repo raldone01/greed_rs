@@ -14,7 +14,7 @@ mod pos;
 pub use pos::Pos;
 
 mod game_field;
-pub use game_field::GameField;
+pub use game_field::{GameField, GameState, TileGrid};
 
 mod tile_chooser;
 /// Internal

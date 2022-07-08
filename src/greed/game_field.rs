@@ -3,7 +3,6 @@ use rand::prelude::*;
 use std::{
   fmt::{Debug, Display},
   iter::FusedIterator,
-  ops::Index,
   rc::Rc,
 };
 use thiserror::Error;
@@ -79,7 +78,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for StrideTileIterator<'a, T> {
     let index = self.start;
     if index < self.end {
       self.start = index + self.stride;
-      Some(self.grid[index])
+      Some(self.grid.get_unchecked(index))
     } else {
       None
     }
@@ -94,7 +93,7 @@ impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for StrideTileIterator<'a, T>
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.start < self.end - self.stride {
       self.end -= self.stride;
-      Some(self.grid[self.end])
+      Some(self.grid.get_unchecked(self.end))
     } else {
       None
     }
@@ -186,8 +185,8 @@ impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
 impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for RowIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     let (x_size, _y_size) = self.grid.dimensions();
-    if self.offset < self.end - self.x_size {
-      self.end -= self.x_size;
+    if self.offset < self.end - x_size {
+      self.end -= x_size;
       Some(StrideTileIterator {
         start: self.end,
         stride: 1,
@@ -216,7 +215,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for TileIterator<'a, T> {
     let index = self.start;
     if index < self.end {
       self.start = index + 1;
-      Some(self.grid[index])
+      Some(self.grid.get_unchecked(index))
     } else {
       None
     }
@@ -231,7 +230,7 @@ impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for TileIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.start < self.end {
       self.end -= 1;
-      Some(self.grid[self.end])
+      Some(self.grid.get_unchecked(self.end))
     } else {
       None
     }
@@ -246,8 +245,6 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   /// For the default implementations to work the each
   /// value in the returned tuple must not exceed isize::MAX.
   fn dimensions(&self) -> (usize, usize);
-
-  fn player_pos(&self) -> Pos;
 
   /// Can also be interpreted as the maximum score
   fn tile_count(&self) -> usize {
@@ -304,12 +301,18 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
 
   fn cols<'a>(&'a self) -> ColIterator<'a, Self> {
-    ColIterator { col: 0, grid: self }
+    let (x_size, y_size) = self.dimensions();
+    ColIterator {
+      start_col: 0,
+      end_col: x_size,
+      grid: self,
+    }
   }
 
   fn rows<'a>(&'a self) -> RowIterator<'a, Self> {
     RowIterator {
       offset: 0,
+      end: self.tile_count(),
       grid: self,
     }
   }
@@ -334,11 +337,12 @@ pub trait Playable {
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError>;
   fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError>;
   fn undo_move(&mut self) -> Result<(), GreedError>;
+  fn game_field(&self) -> &GameField;
 }
 
 /// This mutable structure represents a modified game field.
 /// It encodes which fields have been consumed and the player pos.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
   /// If a tile has a false mask it should be considered as an empty tile.
   /// The player also has a false mask.
@@ -437,7 +441,7 @@ impl GameState {
     let mut iter = moves.iter().rev();
     // If check_move is successful the returned vec contains at least one element
     let &player_index = iter.next().unwrap();
-    self.player_pos = self.index_to_pos(player_index);
+    self.player_pos = self.index_to_pos_unchecked(player_index);
     for &index in iter {
       self.mask.set(index, false)
     }
@@ -466,6 +470,34 @@ impl GameState {
     self.player_pos += dir;
 
     Ok(())
+  }
+}
+
+impl TileGrid for GameState {
+  fn dimensions(&self) -> (usize, usize) {
+    self.game_field.dimensions()
+  }
+
+  fn player_pos(&self) -> Pos {
+    self.player_pos
+  }
+}
+
+impl TileGet<usize> for GameState {
+  fn get(&self, index: usize) -> Option<Tile> {
+    todo!()
+  }
+  fn get_unchecked(&self, index: usize) -> Tile {
+    todo!()
+  }
+}
+
+impl TileGet<Pos> for GameState {
+  fn get(&self, pos: Pos) -> Option<Tile> {
+    todo!()
+  }
+  fn get_unchecked(&self, pos: Pos) -> Tile {
+    todo!()
   }
 }
 
@@ -508,8 +540,6 @@ impl GameField {
     self.vec[pp] = Tile::Player; */
   }
 }
-
-impl TileIndex<usize> for GameField {}
 
 /*
 /// Would give users the ability to insert multiple players or to remove the player!
@@ -612,15 +642,6 @@ impl TryFrom<&str> for GameField {
       y_size: y_pos,
     };
     Ok(game_field) */
-  }
-}
-impl TileGrid for GameField {
-  fn dimensions(&self) -> (usize, usize) {
-    (self.x_size, self.y_size)
-  }
-
-  fn player_pos(&self) -> Pos {
-    self.player_pos
   }
 }
 
