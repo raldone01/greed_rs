@@ -1,14 +1,9 @@
+use super::*;
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use sha2::{Digest, Sha512};
-use std::rc::Rc;
-
-use super::{
-  game_field::{GameState, Playable},
-  *,
-};
 
 #[serde_as]
 #[skip_serializing_none]
@@ -37,11 +32,11 @@ pub struct GreedBuilder {
   pub seed: Option<String>,
   pub name: Option<String>,
   pub difficulty_map: Option<DifficultyMap>,
-  size: (usize, usize),
+  size: Size2D,
 }
 
 impl GreedBuilder {
-  pub fn new() -> GreedBuilder {
+  pub fn new() -> Self {
     Self {
       seed: None,
       name: None,
@@ -49,18 +44,20 @@ impl GreedBuilder {
       size: GameField::default_classic_game_dimensions(),
     }
   }
-  pub fn resize(&mut self, size: (usize, usize)) -> Result<&mut Self, GameFieldParserError> {
-    let (x_size, y_size) = size;
+  pub fn resize(&mut self, size: Size2D) -> Result<&mut Self, GameFieldParserError> {
+    let Size2D { x_size, y_size, .. } = size;
     if x_size < 1 || y_size < 1 {
       return Err(GameFieldParserError::InvalidSize);
     }
     self.size = size;
     Ok(self)
   }
-  pub fn rand_seed(&mut self) -> &mut self {
+  pub fn rand_seed(&mut self) -> &mut Self {
     self
   }
-  pub fn build(&self) -> Greed {}
+  pub fn build(&self) -> Greed {
+    todo!();
+  }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -105,11 +102,11 @@ impl Greed {
     let mut game_field = GameField::new_empty(x_size, y_size);
     game_field.randomize_field(&mut tile_chooser);
 
-    Self {
+    todo!();
+    /* Self {
       game_meta,
-      game_field,
       game_state,
-    }
+    } */
   }
 
   pub fn game_meta(&self) -> &GameMeta {
@@ -117,7 +114,7 @@ impl Greed {
   }
 
   pub fn game_state(&self) -> &GameState {
-    &self.state
+    &self.game_state
   }
   /// Returns the positions that were consumed.
   /// They are in order from the closest to the farthest.
@@ -146,7 +143,7 @@ impl Greed {
 
 impl Playable for Greed {
   fn game_field(&self) -> &GameField {
-    &self.state.game_field()
+    self.game_state.game_field()
   }
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     todo!()
@@ -194,7 +191,7 @@ impl TryFrom<&str> for Greed {
 
 impl From<Greed> for String {
   fn from(greed: Greed) -> Self {
-    let out = String::with_capacity(1024 + greed.game_field.tile_count());
+    let out = String::with_capacity(1024 + greed.game_field().tile_count());
     todo!("Save game meta then write game field")
   }
 }

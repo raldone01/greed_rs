@@ -9,6 +9,13 @@ use super::Direction;
 pub struct Pos {
   pub x: isize,
   pub y: isize,
+  _phantom: (),
+}
+
+impl Pos {
+  pub fn new(x: isize, y: isize) -> Self {
+    Pos { x, y, _phantom: () }
+  }
 }
 
 impl From<Pos> for (isize, isize) {
@@ -19,7 +26,7 @@ impl From<Pos> for (isize, isize) {
 
 impl From<(isize, isize)> for Pos {
   fn from((x, y): (isize, isize)) -> Self {
-    Pos { x, y }
+    Pos::new(x, y)
   }
 }
 
@@ -27,12 +34,12 @@ impl Add<Direction> for Pos {
   type Output = Pos;
 
   fn add(self, rhs: Direction) -> Self::Output {
-    Pos {
-      x: self.x + isize::from(rhs.contains(Direction::RIGHT))
+    Pos::new(
+      self.x + isize::from(rhs.contains(Direction::RIGHT))
         - isize::from(rhs.contains(Direction::LEFT)),
-      y: self.y + isize::from(rhs.contains(Direction::DOWN))
+      self.y + isize::from(rhs.contains(Direction::DOWN))
         - isize::from(rhs.contains(Direction::UP)),
-    }
+    )
   }
 }
 
@@ -49,10 +56,7 @@ impl Add for Pos {
   type Output = Pos;
 
   fn add(self, rhs: Self) -> Self::Output {
-    Pos {
-      x: self.x + rhs.x,
-      y: self.y + rhs.y,
-    }
+    Pos::new(self.x + rhs.x, self.y + rhs.y)
   }
 }
 
@@ -67,10 +71,7 @@ impl Sub for Pos {
   type Output = Pos;
 
   fn sub(self, rhs: Self) -> Self::Output {
-    Pos {
-      x: self.x - rhs.x,
-      y: self.y - rhs.y,
-    }
+    Pos::new(self.x - rhs.x, self.y - rhs.y)
   }
 }
 

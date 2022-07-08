@@ -1,6 +1,5 @@
-use thiserror::Error;
-
 use super::*;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum GreedError {
