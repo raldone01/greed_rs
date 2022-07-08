@@ -1,10 +1,12 @@
+use std::pin::Pin;
+
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use sha2::{Digest, Sha512};
 
-use super::*;
+use super::{game_field::GameState, *};
 
 #[serde_as]
 #[skip_serializing_none]
@@ -31,7 +33,8 @@ pub struct GameMeta {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
   meta: GameMeta,
-  field: GameField,
+  field: Pin<Box<GameField>>,
+  state: GameState<'Self::field>,
 }
 
 impl Greed {
