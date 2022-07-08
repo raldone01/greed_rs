@@ -33,11 +33,40 @@ pub struct GameMeta {
   pub undos: Option<usize>,
 }
 
+pub struct GreedBuilder {
+  pub seed: Option<String>,
+  pub name: Option<String>,
+  pub difficulty_map: Option<DifficultyMap>,
+  size: (usize, usize),
+}
+
+impl GreedBuilder {
+  pub fn new() -> GreedBuilder {
+    Self {
+      seed: None,
+      name: None,
+      difficulty_map: None,
+      size: GameField::default_classic_game_dimensions(),
+    }
+  }
+  pub fn resize(&mut self, size: (usize, usize)) -> Result<&mut Self, GameFieldParserError> {
+    let (x_size, y_size) = size;
+    if x_size < 1 || y_size < 1 {
+      return Err(GameFieldParserError::InvalidSize);
+    }
+    self.size = size;
+    Ok(self)
+  }
+  pub fn rand_seed(&mut self) -> &mut self {
+    self
+  }
+  pub fn build(&self) -> Greed {}
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
-  game_field: Rc<GameField>,
-  meta: GameMeta,
-  state: GameState,
+  game_meta: GameMeta,
+  game_state: GameState,
 }
 
 impl Greed {
@@ -76,14 +105,19 @@ impl Greed {
     let mut game_field = GameField::new_empty(x_size, y_size);
     game_field.randomize_field(&mut tile_chooser);
 
-    todo!();
-    //Self {
-    //  meta: game_meta,
-    //  field: game_field,
-    //}
+    Self {
+      game_meta,
+      game_field,
+      game_state,
+    }
   }
+
   pub fn game_meta(&self) -> &GameMeta {
-    &self.meta
+    &self.game_meta
+  }
+
+  pub fn game_state(&self) -> &GameState {
+    &self.state
   }
   /// Returns the positions that were consumed.
   /// They are in order from the closest to the farthest.

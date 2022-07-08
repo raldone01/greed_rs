@@ -28,6 +28,8 @@ pub enum GameFieldParserError {
   InvalidMetaData { cause: json5::Error },
   #[error("No trailing new line")]
   NoTrailingNewLine,
+  #[error("Invalid size")]
+  InvalidSize,
 }
 
 #[derive(Error, Debug, PartialEq)]

@@ -3,6 +3,7 @@ use rand::prelude::*;
 use std::{
   fmt::{Debug, Display},
   iter::FusedIterator,
+  num::TryFromIntError,
   rc::Rc,
 };
 use thiserror::Error;
@@ -64,7 +65,6 @@ pub trait TileGet<I> {
   fn get_unchecked(&self, index: I) -> Tile;
 }
 
-/// TODO: Use generics to remove two of the three usizes with an enum to disambiguate row or col iter at compile time.
 pub struct StrideTileIterator<'a, T: TileGrid + ?Sized> {
   start: usize,
   stride: usize,
@@ -140,7 +140,7 @@ impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for ColIterator<'a, T> {
       Some(StrideTileIterator {
         start: self.end_col,
         stride: x_size,
-        end: y_size * x_size, // col + 1 + (y_size - 1) * x_size,
+        end: col + 1 + (y_size - 1) * x_size, // y_size * x_size
         grid: self.grid,
       })
     } else {
@@ -527,8 +527,8 @@ impl GameField {
     todo!()
   }
 
-  pub fn default_classic_game_dimensions() -> Pos {
-    Pos { x: 79, y: 21 }
+  pub fn default_classic_game_dimensions() -> (usize, usize) {
+    (79, 21)
   }
 
   pub(super) fn randomize_field(&mut self, tile_chooser: &mut TileChooser<impl Rng>) {
@@ -538,6 +538,55 @@ impl GameField {
     }
     let pp = tile_chooser.rng.gen_range(0..self.vec.len());
     self.vec[pp] = Tile::Player; */
+  }
+}
+
+pub struct Size {
+  pub x_size: usize,
+  pub y_size: usize,
+  _phantom: (),
+}
+
+impl Size {
+  pub fn new(x_size: usize, y_size: usize) -> Self {
+    Size {
+      x_size,
+      y_size,
+      _phantom: (),
+    }
+  }
+}
+
+impl TryFrom<Size> for Pos {
+  type Error = TryFromIntError;
+
+  fn try_from(value: Size) -> Result<Self, Self::Error> {
+    Ok(Pos {
+      x: isize::try_from(value.x_size)?,
+      y: isize::try_from(value.y_size)?,
+    })
+  }
+}
+impl TryFrom<Pos> for Size {
+  type Error = TryFromIntError;
+
+  fn try_from(value: Pos) -> Result<Self, Self::Error> {
+    Ok(Size::new(
+      usize::try_from(value.x)?,
+      usize::try_from(value.y)?,
+    ))
+  }
+}
+
+impl From<Size> for (usize, usize) {
+  fn from(value: Size) -> Self {
+    (value.x_size, value.y_size)
+  }
+}
+
+impl From<(usize, usize)> for Size {
+  fn from((x_size, y_size): (usize, usize)) -> Self {
+    Size::new(x_size, y_size)
   }
 }
 
