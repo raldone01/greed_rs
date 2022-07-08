@@ -1,12 +1,14 @@
-use std::pin::Pin;
-
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use sha2::{Digest, Sha512};
+use std::rc::Rc;
 
-use super::{game_field::GameState, *};
+use super::{
+  game_field::{GameState, Playable},
+  *,
+};
 
 #[serde_as]
 #[skip_serializing_none]
@@ -28,13 +30,14 @@ pub struct GameMeta {
   /// This value can't be verified and is designed to increase human engagement.
   /// TODO: Maybe also store average_move_time.
   pub human_score: Option<usize>,
+  pub undos: Option<usize>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
+  game_field: Rc<GameField>,
   meta: GameMeta,
-  field: Pin<Box<GameField>>,
-  state: GameState<'Self::field>,
+  state: GameState,
 }
 
 impl Greed {
@@ -73,10 +76,11 @@ impl Greed {
     let mut game_field = GameField::new_empty(x_size, y_size);
     game_field.randomize_field(&mut tile_chooser);
 
-    Self {
-      meta: game_meta,
-      field: game_field,
-    }
+    todo!();
+    //Self {
+    //  meta: game_meta,
+    //  field: game_field,
+    //}
   }
   pub fn game_meta(&self) -> &GameMeta {
     &self.meta
@@ -109,6 +113,8 @@ impl Greed {
   }
 }
 
+impl Playable for Greed {}
+
 impl TryFrom<&str> for Greed {
   type Error = GameFieldParserError;
 
@@ -132,10 +138,11 @@ impl TryFrom<&str> for Greed {
       GameMeta::default()
     };
     let game_field = GameField::try_from(&value[meta_end_pos..])?;
-    Ok(Self {
-      meta: game_meta,
-      field: game_field,
-    })
+    todo!();
+    //Ok(Self {
+    //  meta: game_meta,
+    //  field: game_field,
+    //})
   }
 }
 
