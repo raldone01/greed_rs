@@ -59,11 +59,9 @@ pub struct GameField {
 }
 
 type Amount = u8;
-
-pub trait TileIndex<I>: Index<I, Output = Tile> {}
-
 pub trait TileGet<I> {
-  fn get(&self, index: I) -> Option<&Tile>;
+  fn get(&self, index: I) -> Option<Tile>;
+  fn get_unchecked(&self, index: I) -> Tile;
 }
 
 pub struct TileIterator<'a, T: TileGrid + ?Sized> {
@@ -105,10 +103,13 @@ impl<'a, T: TileGrid + ?Sized> FusedIterator for TileIterator<'a, T> {}
 impl<'a, T: TileGrid + ?Sized> ExactSizeIterator for TileIterator<'a, T> {}
 // impl<'a, T: TileGrid + ?Sized> RandomAccessIterator for TileIterator<'a, T> {}
 
-pub trait TileGrid: TileGet<usize> + TileGet<Pos> + TileIndex<Pos> + TileIndex<usize> {
+pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   /// For the default implementations to work the each
   /// value in the returned tuple must not exceed isize::MAX.
   fn dimensions(&self) -> (usize, usize);
+
+  fn player_pos(&self) -> Pos;
+
   /// Can also be interpreted as the maximum score
   fn tile_count(&self) -> usize {
     let (x_size, y_size) = self.dimensions();
@@ -203,19 +204,6 @@ impl<'a> GameState<'a> {
       moves: Vec::new(),
       player_pos,
     }
-  }
-
-  pub fn valid_pos(&self, pos: Pos) -> Option<Pos> {
-    todo!()
-    // self.game_field.valid_pos(pos)
-  }
-
-  pub fn pos_to_index(&self, pos: Pos) -> Option<usize> {
-    self.game_field.pos_to_index(pos)
-  }
-
-  pub fn index_to_pos(&self, index: usize) -> Pos {
-    self.game_field.index_to_pos(index)
   }
 
   pub fn game_field(&self) -> &'a GameField {
@@ -342,14 +330,6 @@ impl GameField {
     Pos { x: 79, y: 21 }
   }
 
-  pub fn pos_to_index(&self, pos: Pos) -> Option<usize> {
-    todo!()
-  }
-
-  pub fn index_to_pos(&self, index: usize) -> Pos {
-    todo!()
-  }
-
   pub(super) fn randomize_field(&mut self, tile_chooser: &mut TileChooser<impl Rng>) {
     todo!()
     /* for tile in self.vec.iter_mut() {
@@ -357,29 +337,6 @@ impl GameField {
     }
     let pp = tile_chooser.rng.gen_range(0..self.vec.len());
     self.vec[pp] = Tile::Player; */
-  }
-
-  pub fn player_pos(&self) -> Pos {
-    self.player_pos
-  }
-
-  pub fn tile_count(&self) -> usize {
-    self.x_size * self.y_size
-  }
-
-  pub fn score(&self) -> usize {
-    /*
-    self.vec.iter().fold(
-      0,
-      |accu, &item| {
-        if item == Tile::EMPTY {
-          accu + 1
-        } else {
-          accu
-        }
-      },
-    )*/
-    todo!()
   }
 }
 
@@ -484,5 +441,60 @@ impl TryFrom<&str> for GameField {
       y_size: y_pos,
     };
     Ok(game_field) */
+  }
+}
+impl TileGrid for GameField {
+  fn dimensions(&self) -> (usize, usize) {
+    (self.x_size, self.y_size)
+  }
+
+  fn player_pos(&self) -> Pos {
+    self.player_pos
+  }
+}
+
+impl TileGet<usize> for GameField {
+  fn get(&self, index: usize) -> Option<Tile> {
+    // player_pos is always valid(Hopefully)
+    if index == self.pos_to_index_unchecked(self.player_pos) {
+      Some(Tile::Player)
+    } else {
+      // Never masked since we are GF
+
+      Some(Tile::from(*self.vec.get(index)?))
+    }
+  }
+  fn get_unchecked(&self, index: usize) -> Tile {
+    // player_pos is always valid(Hopefully)
+    if index == self.pos_to_index_unchecked(self.player_pos) {
+      Tile::Player
+    } else {
+      // Never masked since we are GF
+
+      Tile::from(self.vec[index])
+    }
+  }
+}
+
+impl TileGet<Pos> for GameField {
+  fn get(&self, pos: Pos) -> Option<Tile> {
+    if pos == self.player_pos {
+      Some(Tile::Player)
+    } else {
+      // Never masked since we are GF
+
+      let index = self.pos_to_index(pos)?;
+      Some(Tile::from(*self.vec.get(index)?))
+    }
+  }
+  fn get_unchecked(&self, pos: Pos) -> Tile {
+    if pos == self.player_pos {
+      Tile::Player
+    } else {
+      // Never masked since we are GF
+
+      let index = self.pos_to_index_unchecked(pos);
+      Tile::from(self.vec[index])
+    }
   }
 }
