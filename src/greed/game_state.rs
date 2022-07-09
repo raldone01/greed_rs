@@ -176,4 +176,8 @@ impl Playable for GameState {
   fn game_field(&self) -> &GameField {
     &self.game_field
   }
+
+  fn move_count(&self) -> usize {
+    self.moves().len()
+  }
 }

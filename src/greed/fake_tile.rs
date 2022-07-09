@@ -1,8 +1,9 @@
 use super::*;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use thiserror::Error;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FakeTile {
   amount: u8,
 }

@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::{
   fmt,
   ops::{Add, AddAssign, Neg, Sub, SubAssign},
@@ -6,7 +7,7 @@ use std::{
 use super::Direction;
 
 #[non_exhaustive]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Pos {
   pub x: isize,
   pub y: isize,

@@ -1,11 +1,12 @@
 use rand::prelude::*;
-use std::fmt::{Debug, Display};
+use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Write};
 
 use super::*;
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct GameField {
   pub(super) vec: Box<[FakeTile]>,
   size: Size2D,
@@ -49,26 +50,24 @@ impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
     // Don't forget about the new line characters
     let mut out = String::with_capacity(game_field.tile_count() + game_field.size.y_size);
-    /* for row in game_field.row_iter() {
-      for &tile in row {
+    for row in game_field.rows() {
+      for tile in row {
         out.push(char::from(tile))
       }
       out.push('\n')
-    } */
-    todo!();
+    }
     out
   }
 }
 
 impl Display for GameField {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    /* for row in self.row_iter() {
-      for &tile in row {
+    for row in self.rows() {
+      for tile in row {
         f.write_char(char::from(tile))?
       }
       f.write_char('\n')?
-    } */
-    todo!();
+    }
     Ok(())
   }
 }

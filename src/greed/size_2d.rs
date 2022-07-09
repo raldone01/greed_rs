@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
 
 use super::*;
 
 #[non_exhaustive]
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Size2D {
   pub x_size: usize,
   pub y_size: usize,
