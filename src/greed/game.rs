@@ -1,4 +1,5 @@
 use super::*;
+use chrono::{DateTime, Utc};
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -44,29 +45,105 @@ impl GreedBuilder {
       size: GameField::default_classic_game_dimensions(),
     }
   }
+
   pub fn resize(&mut self, size: Size2D) -> Result<&mut Self, GameFieldParserError> {
     let Size2D { x_size, y_size, .. } = size;
-    if x_size < 1 || y_size < 1 {
+    if x_size < 1 || y_size < 1 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
       return Err(GameFieldParserError::InvalidSize);
     }
     self.size = size;
     Ok(self)
   }
+
+  fn gen_rand_seed_str() -> String {
+    let mut thread_rng = thread_rng();
+    let uniform = Uniform::new_inclusive('A', 'Z');
+    let random_string = (0..512)
+      .map(|_| thread_rng.sample(uniform))
+      .collect::<String>();
+    random_string
+  }
+
   pub fn rand_seed(&mut self) -> &mut Self {
+    self.seed = Some(GreedBuilder::gen_rand_seed_str());
     self
   }
+
+  pub fn seed(&mut self, seed: &str) -> &mut Self {
+    self.seed = Some(String::from(seed));
+    self
+  }
+
+  pub fn name(&mut self, name: &str) -> &mut Self {
+    self.name = Some(String::from(name));
+    self
+  }
+
+  pub fn difficulty_map(&mut self, difficulty_map: DifficultyMap) {
+    self.difficulty_map = Some(difficulty_map.clone());
+  }
+
   pub fn build(&self) -> Greed {
-    todo!();
+    let seed = self
+      .seed
+      .clone()
+      .unwrap_or(GreedBuilder::gen_rand_seed_str());
+
+    let name = self.name.clone().unwrap_or(seed);
+
+    let difficulty_map = self
+      .difficulty_map
+      .clone()
+      .unwrap_or(DifficultyMap::default_difficulties().clone());
+
+    Greed::new_from_builder(size, seed, name, difficulty_map)
   }
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
-  game_meta: GameMeta,
+  seed: String,
+  name: String,
+  utc_started_ms: DateTime<Utc>,
+  utc_finished_ms: Option<DateTime<Utc>>,
+  difficulty_map: DifficultyMap,
+  undos: usize,
   game_state: GameState,
 }
 
 impl Greed {
+  fn new_from_builder(
+    size: Size2D,
+    string_seed: String,
+    name: String,
+    difficulty_map: DifficultyMap,
+  ) -> Self {
+    let mut hasher = Sha512::new();
+    hasher.update(string_seed);
+    let hash = hasher.finalize();
+    let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
+    // init the random gen with the first 16 bytes of the hash
+    let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
+    #[allow(clippy::or_fun_call)] // TODO: Create an issue
+    let diff_map = game_meta
+      .difficulty_map
+      .as_ref()
+      .unwrap_or(DifficultyMap::default_difficulties());
+    let mut tile_chooser = TileChooser::new(&mut rng, diff_map);
+    let mut game_field = GameField::new_empty(x_size, y_size);
+    game_field.randomize_field(&mut tile_chooser);
+
+    Greed {
+      seed: string_seed,
+      name,
+      utc_started_ms: chrono::Utc::now(),
+      utc_finished_ms: None,
+      difficulty_map,
+      undos: 0,
+      game_state: (),
+    }
+  }
+
   pub fn new(x_size: usize, y_size: usize, mut game_meta: GameMeta) -> Self {
     game_meta.greed_version = Some(1);
     game_meta.file_version.get_or_insert(1);
