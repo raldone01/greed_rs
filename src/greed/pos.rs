@@ -78,6 +78,7 @@ impl Neg for Pos {
 impl Sub for Pos {
   type Output = Pos;
 
+  #[allow(clippy::suspicious_arithmetic_impl)] // Clippy is a bit stupid
   fn sub(self, rhs: Self) -> Self::Output {
     self + rhs.neg()
     // self + -rhs

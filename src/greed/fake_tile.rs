@@ -19,14 +19,16 @@ impl FakeTile {
 }
 
 #[derive(Error, Debug, PartialEq)]
-#[error("Can't convert player Tile to FakeTile")]
-pub struct FakeTileConversionError {}
+pub enum FakeTileConversionError {
+  #[error("Can't convert player Tile to FakeTile")]
+  PlayerTile,
+}
 
 impl TryFrom<Tile> for FakeTile {
   type Error = FakeTileConversionError;
 
   fn try_from(value: Tile) -> Result<Self, Self::Error> {
-    let amount = value.amount().ok_or(FakeTileConversionError {})?;
+    let amount = value.amount().ok_or(FakeTileConversionError::PlayerTile)?;
     Ok(FakeTile { amount })
   }
 }
