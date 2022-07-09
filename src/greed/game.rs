@@ -1,8 +1,3 @@
-use std::{
-  rc::Rc,
-  time::{Duration, Instant},
-};
-
 use super::*;
 use chrono::{DateTime, Utc};
 use rand::distributions::Uniform;
@@ -10,6 +5,10 @@ use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none};
 use sha2::{Digest, Sha512};
+use std::{
+  rc::Rc,
+  time::{Duration, Instant},
+};
 
 #[serde_as]
 #[skip_serializing_none]
@@ -33,6 +32,7 @@ pub struct GameMeta {
   /// TODO: Maybe also store average_move_time.
   pub human_score: Option<usize>,
   pub undos: Option<usize>,
+  pub inital_game_field: Option<GameField>,
 }
 
 impl GameMeta {
@@ -67,6 +67,7 @@ impl GameMeta {
       score: Some(greed.score()),
       human_score: Some(greed.human_score()),
       undos: Some(greed.undos),
+      inital_game_field: Some(greed.game_field().clone()),
     }
   }
 }
@@ -189,13 +190,6 @@ impl Greed {
     }
   }
 
-  pub fn from_string(str: &str) -> Self {
-    todo!();
-  }
-  pub fn from_string_unchecked(str: &str) -> Self {
-    todo!();
-  }
-
   pub fn game_meta(&self) -> GameMeta {
     GameMeta::new(self)
   }
@@ -212,6 +206,14 @@ impl Greed {
     self.time_spent + self.session_time()
   }
 
+  pub fn total_move_count(&self) -> usize {
+    self.game_state.move_count() + self.undos
+  }
+
+  pub fn undo_count(&self) -> usize {
+    self.undos
+  }
+
   pub fn validate_replay(game_meta: &GameMeta) {
     todo!()
   }
@@ -225,16 +227,21 @@ impl Playable for Greed {
   fn game_field(&self) -> &GameField {
     self.game_state.game_field()
   }
+
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
-    todo!()
+    self.game_state.check_move(dir)
   }
 
   fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
-    todo!()
+    self.game_state.move_(dir)
   }
 
   fn undo_move(&mut self) -> Result<(), GreedError> {
-    todo!()
+    self.game_state.undo_move().map(|_| self.undos += 1)
+  }
+
+  fn move_count(&self) -> usize {
+    self.game_state.moves().len()
   }
 }
 
