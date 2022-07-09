@@ -250,10 +250,43 @@ where
 
 impl TileGrid for Greed {
   fn dimensions(&self) -> Size2D {
-    self.game_field().dimensions()
+    self.game_state.dimensions()
   }
   fn player_pos(&self) -> Pos {
-    self.game_field().player_pos()
+    self.game_state.player_pos()
+  }
+
+  // The following functions are implemented as wrappers to make sure they aren't generated again
+  fn tile_count(&self) -> usize {
+    self.game_state.tile_count()
+  }
+
+  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    self.game_state.valid_pos(pos)
+  }
+
+  fn valid_index(&self, index: usize) -> Option<usize> {
+    self.game_state.valid_index(index)
+  }
+
+  fn pos_to_index(&self, pos: Pos) -> Option<usize> {
+    self.game_state.pos_to_index(pos)
+  }
+
+  fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
+    self.game_state.pos_to_index_unchecked(pos)
+  }
+
+  fn index_to_pos(&self, index: usize) -> Option<Pos> {
+    self.game_state.index_to_pos(index)
+  }
+
+  fn index_to_pos_unchecked(&self, index: usize) -> Pos {
+    self.game_state.index_to_pos_unchecked(index)
+  }
+
+  fn score(&self) -> usize {
+    self.game_state.score()
   }
 }
 

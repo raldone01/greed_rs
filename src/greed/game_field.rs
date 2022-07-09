@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug, Display, Write};
 
 use crate::greed::fake_tile::FakeTileConversionError;
 
@@ -64,13 +64,12 @@ impl From<&GameField> for String {
 
 impl Display for GameField {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    /* for row in self.row_iter() {
-      for &tile in row {
+    for row in self.rows() {
+      for tile in row {
         f.write_char(char::from(tile))?
       }
       f.write_char('\n')?
-    } */
-    todo!();
+    }
     Ok(())
   }
 }
