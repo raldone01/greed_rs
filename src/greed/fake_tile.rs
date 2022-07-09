@@ -13,6 +13,9 @@ impl FakeTile {
   pub fn amount(self) -> u8 {
     self.amount
   }
+  pub fn from_unchecked(tile: Tile) -> FakeTile {
+    Self { amount: tile as u8 }
+  }
 }
 
 #[derive(Error, Debug, PartialEq)]

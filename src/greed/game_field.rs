@@ -8,15 +8,14 @@ use super::*;
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameField {
   pub(super) vec: Box<[FakeTile]>,
-  x_size: usize,
-  y_size: usize,
+  size: Size2D,
   /// initial player_pos
   player_pos: Pos,
 }
 
 impl TileGrid for GameField {
-  fn dimensions(&self) -> (usize, usize) {
-    (self.x_size, self.y_size)
+  fn dimensions(&self) -> Size2D {
+    self.size
   }
 
   fn player_pos(&self) -> Pos {
@@ -25,39 +24,34 @@ impl TileGrid for GameField {
 }
 
 impl GameField {
-  /// Constructs an GameField full of Empty tiles.
-  /// It is in an invalid state!
-  pub(super) fn new_empty(rows: usize, cols: usize) -> Self {
-    todo!()
-    /* Self {
-      vec: vec![Tile::EMPTY; rows * cols],
-      x_size: cols,
-      y_size: rows,
-    } */
-  }
-
-  pub fn new_game_state(&self) -> GameState {
-    todo!()
-  }
-
   pub fn default_classic_game_dimensions() -> Size2D {
     Size2D::new(79, 21)
   }
 
-  pub(super) fn randomize_field(&mut self, tile_chooser: &mut TileChooser<impl Rng>) {
-    todo!()
-    /* for tile in self.vec.iter_mut() {
-      *tile = tile_chooser.choose();
+  pub(super) fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
+    let vec = (0..size.tile_count())
+      .map(|_| tile_chooser.choose())
+      .collect();
+
+    //for tile in self.vec.iter_mut() {
+    //  *tile = tile_chooser.choose();
+    //}
+    let player_pos = Pos {
+      x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
+      y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
+    };
+    Self {
+      vec,
+      size,
+      player_pos,
     }
-    let pp = tile_chooser.rng.gen_range(0..self.vec.len());
-    self.vec[pp] = Tile::Player; */
   }
 }
 
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
     // Don't forget about the new line characters
-    let mut out = String::with_capacity(game_field.tile_count() + game_field.y_size);
+    let mut out = String::with_capacity(game_field.tile_count() + game_field.size.y_size);
     /* for row in game_field.row_iter() {
       for &tile in row {
         out.push(char::from(tile))
