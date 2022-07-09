@@ -15,8 +15,8 @@ pub enum GreedError {
 pub enum GameFieldParserError {
   #[error("Player not found on the game field")]
   PlayerNotFound,
-  #[error("Multiple players found on the game field")]
-  AmbiguousPlayer,
+  #[error("Multiple players found on the game field ({first:} and {second:})")]
+  AmbiguousPlayer { first: Pos, second: Pos },
   #[error("Game field contains an invalid character ({found:}) at {pos:}")]
   InvalidCharacter { found: char, pos: Pos },
   #[error("Game field not rectangular")]

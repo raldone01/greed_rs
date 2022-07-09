@@ -1,6 +1,8 @@
 use rand::prelude::*;
 use std::fmt::{Debug, Display};
 
+use crate::greed::fake_tile::FakeTileConversionError;
+
 use super::*;
 
 /// This immutable structure represents the initial state of a game of greed.
@@ -33,9 +35,6 @@ impl GameField {
       .map(|_| tile_chooser.choose())
       .collect();
 
-    //for tile in self.vec.iter_mut() {
-    //  *tile = tile_chooser.choose();
-    //}
     let player_pos = Pos {
       x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
       y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
@@ -81,12 +80,12 @@ impl TryFrom<&str> for GameField {
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let default_size = GameField::default_classic_game_dimensions();
-    let mut vec = Vec::with_capacity(default_size.x_size * default_size.y_size);
+    let mut vec = Vec::with_capacity(default_size.tile_count());
 
     let mut x_size = None;
     let mut x_pos = 0;
     let mut y_pos = 0;
-    let mut player_seen = false;
+    let mut player_pos = None;
     for c in value.chars() {
       match c {
         '\n' => {
@@ -104,42 +103,56 @@ impl TryFrom<&str> for GameField {
           y_pos += 1;
         },
         c => {
+          // This technically doesn't need to be always calculated, but its po
+          let pos = {
+            Pos::new(
+              x_pos
+                .try_into()
+                .map_err(|_| GameFieldParserError::InvalidSize)?,
+              y_pos
+                .try_into()
+                .map_err(|_| GameFieldParserError::InvalidSize)?,
+            )
+          };
           let tile = Tile::try_from(c).map_err(|err| GameFieldParserError::InvalidCharacter {
             found: err.found,
-            pos: Pos::new(
-              isize::try_from(x_pos).unwrap(),
-              isize::try_from(y_pos).unwrap(),
-            ),
+            pos,
           })?;
-          if tile == Tile::Player {
-            if player_seen {
-              return Err(GameFieldParserError::AmbiguousPlayer);
-            }
-            player_seen = true
+
+          match FakeTile::try_from(tile) {
+            Ok(tile) => vec.push(tile),
+            Err(FakeTileConversionError::PlayerTile) => {
+              if let Some(first) = player_pos {
+                return Err(GameFieldParserError::AmbiguousPlayer { first, second: pos });
+              }
+              player_pos = Some(pos);
+              vec.push(FakeTile::EMTPY);
+            },
           }
-          vec.push(tile);
+
           x_pos += 1;
         },
       }
     }
 
-    if !player_seen {
-      return Err(GameFieldParserError::PlayerNotFound);
+    if y_pos == 0 {
+      return Err(GameFieldParserError::InvalidSize);
     }
 
     if x_pos != 0 {
       return Err(GameFieldParserError::NoTrailingNewLine);
     }
 
-    let x_size = x_size.unwrap();
-    assert!(vec.len() == x_size * y_pos);
-    todo!()
-    /*let game_field = GameField {
+    let size = Size2D::new(x_size.unwrap(), y_pos);
+    assert!(vec.len() == size.tile_count());
+    let vec = vec.into_boxed_slice();
+
+    let game_field = GameField {
       vec,
-      x_size,
-      y_size: y_pos,
+      size,
+      player_pos: player_pos.ok_or(GameFieldParserError::PlayerNotFound)?,
     };
-    Ok(game_field) */
+    Ok(game_field)
   }
 }
 

@@ -238,6 +238,28 @@ impl Playable for Greed {
   }
 }
 
+impl<T> TileGet<T> for Greed
+where
+  GameState: TileGet<T>,
+{
+  fn get(&self, index: T) -> Option<Tile> {
+    self.game_state.get(index)
+  }
+
+  fn get_unchecked(&self, index: T) -> Tile {
+    self.game_state.get_unchecked(index)
+  }
+}
+
+impl TileGrid for Greed {
+  fn dimensions(&self) -> Size2D {
+    self.game_field().dimensions()
+  }
+  fn player_pos(&self) -> Pos {
+    self.game_field().player_pos()
+  }
+}
+
 impl TryFrom<&str> for Greed {
   type Error = GameFieldParserError;
 
