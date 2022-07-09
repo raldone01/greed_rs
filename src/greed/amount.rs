@@ -26,7 +26,7 @@ impl Amount {
   pub fn amount(&self) -> u8 {
     self.0
   }
-  pub fn new_unchecked(val: u8) -> Self {
+  pub(super) fn new_unchecked(val: u8) -> Self {
     Self(val)
   }
 }

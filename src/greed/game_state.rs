@@ -31,6 +31,10 @@ impl GameState {
     }
   }
 
+  pub fn moves(&self) -> &[(Direction, Amount)] {
+    &self.moves
+  }
+
   fn get_fake_unchecked(&self, index: usize) -> FakeTile {
     #[allow(clippy::bool_comparison)]
     // self.mask[index] == false is purposefully used over !self.mask[index] i
