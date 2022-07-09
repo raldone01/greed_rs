@@ -48,6 +48,7 @@ impl GameField {
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
     // Don't forget about the new line characters
+    #[allow(unused_mut)]
     let mut out = String::with_capacity(game_field.tile_count() + game_field.size.y_size);
     /* for row in game_field.row_iter() {
       for &tile in row {
@@ -56,6 +57,7 @@ impl From<&GameField> for String {
       out.push('\n')
     } */
     todo!();
+    #[allow(unreachable_code)]
     out
   }
 }

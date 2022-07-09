@@ -7,6 +7,8 @@ pub enum GreedError {
   InvalidDirection,
   #[error("Bad move")]
   BadMove,
+  #[error("Tried to undo an invalid move (probably originating from a corrupted save file)")]
+  UndoInvalidMove,
   #[error("Game complete")]
   GameComplete,
 }

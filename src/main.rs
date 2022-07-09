@@ -17,7 +17,7 @@ use crate::termion::run;
 fn main() {
   // let game = greed::Greed::try_from("1034@\n17817\n").unwrap();
   // println!("FIELD:\n{}", game.field());
-
+  #[allow(unused_mut)]
   let mut field = greed::GameField::try_from("1034@\n17817\n").unwrap();
   println!("FIELD:\n{}", field);
 

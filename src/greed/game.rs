@@ -99,11 +99,11 @@ impl GreedBuilder {
 
   fn gen_rand_seed_str() -> String {
     let mut thread_rng = thread_rng();
-    let uniform = Uniform::new_inclusive('A', 'Z');
-    let random_string = (0..512)
+    let uniform = Uniform::from('A'..='Z');
+
+    (0..512)
       .map(|_| thread_rng.sample(uniform))
-      .collect::<String>();
-    random_string
+      .collect::<String>()
   }
 
   pub fn rand_seed(&mut self) -> &mut Self {
@@ -122,14 +122,14 @@ impl GreedBuilder {
   }
 
   pub fn difficulty_map(&mut self, difficulty_map: DifficultyMap) {
-    self.difficulty_map = Some(difficulty_map.clone());
+    self.difficulty_map = Some(difficulty_map);
   }
 
   pub fn build(&self) -> Greed {
     let seed = self
       .seed
       .clone()
-      .unwrap_or(GreedBuilder::gen_rand_seed_str());
+      .unwrap_or_else(GreedBuilder::gen_rand_seed_str);
 
     let name = self.name.clone().unwrap_or_else(|| seed.clone());
 
