@@ -55,7 +55,7 @@ impl GameMeta {
         .as_millis()
         .try_into()
         .expect("How the hell did you play that long? (Create an issue)"),
-      difficulty_map: greed.difficulty_map,
+      difficulty_map: greed.difficulty_map.clone(),
       moves: Some(
         greed
           .game_state
@@ -131,12 +131,12 @@ impl GreedBuilder {
       .clone()
       .unwrap_or(GreedBuilder::gen_rand_seed_str());
 
-    let name = self.name.clone().unwrap_or(seed);
+    let name = self.name.clone().unwrap_or_else(|| seed.clone());
 
     let difficulty_map = self
       .difficulty_map
       .clone()
-      .unwrap_or(DifficultyMap::default_difficulties().clone());
+      .unwrap_or_else(|| DifficultyMap::default_difficulties().clone());
 
     Greed::new_from_builder(self.size, seed, name, difficulty_map)
   }
@@ -167,14 +167,14 @@ impl Greed {
     difficulty_map: DifficultyMap,
   ) -> Self {
     let mut hasher = Sha512::new();
-    hasher.update(string_seed);
+    hasher.update(&string_seed);
     let hash = hasher.finalize();
     let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
     // init the random gen with the first 16 bytes of the hash
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
     #[allow(clippy::or_fun_call)] // TODO: Create an issue
     let mut tile_chooser = TileChooser::new(&mut rng, &difficulty_map);
-    let mut game_field = Rc::from(GameField::new_random(&mut tile_chooser, size));
+    let game_field = Rc::from(GameField::new_random(&mut tile_chooser, size));
 
     Greed {
       seed: Some(string_seed),

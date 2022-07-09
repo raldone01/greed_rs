@@ -36,7 +36,7 @@ use tile_chooser::{DifficultyMap, DifficultyMapExt, TileChooser};
 
 mod fake_tile;
 /// Internal
-use fake_tile::FakeTile;
+use fake_tile::{FakeTile, FakeTileConversionError};
 
 mod amount;
 pub use amount::Amount;

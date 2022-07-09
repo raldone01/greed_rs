@@ -1,8 +1,6 @@
 use rand::prelude::*;
 use std::fmt::{Debug, Display};
 
-use crate::greed::fake_tile::FakeTileConversionError;
-
 use super::*;
 
 /// This immutable structure represents the initial state of a game of greed.
