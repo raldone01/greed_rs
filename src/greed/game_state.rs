@@ -31,10 +31,6 @@ impl GameState {
     }
   }
 
-  pub fn game_field(&self) -> &GameField {
-    &self.game_field
-  }
-
   fn get_fake_unchecked(&self, index: usize) -> FakeTile {
     #[allow(clippy::bool_comparison)]
     // self.mask[index] == false is purposefully used over !self.mask[index] i
@@ -44,13 +40,57 @@ impl GameState {
       self.game_field.vec[index]
     }
   }
+}
 
+impl TileGrid for GameState {
+  fn dimensions(&self) -> Size2D {
+    self.game_field.dimensions()
+  }
+
+  fn player_pos(&self) -> Pos {
+    self.player_pos
+  }
+}
+
+impl TileGet<usize> for GameState {
+  fn get(&self, index: usize) -> Option<Tile> {
+    if index < self.mask.len() {
+      Some(self.get_unchecked(index))
+    } else {
+      None
+    }
+  }
+  fn get_unchecked(&self, index: usize) -> Tile {
+    if index == self.pos_to_index_unchecked(self.player_pos) {
+      Tile::Player
+    } else {
+      Tile::from(self.get_fake_unchecked(index))
+    }
+  }
+}
+
+impl TileGet<Pos> for GameState {
+  fn get(&self, pos: Pos) -> Option<Tile> {
+    let index = self.pos_to_index_unchecked(pos);
+    self.get(index)
+  }
+  fn get_unchecked(&self, pos: Pos) -> Tile {
+    if pos == self.player_pos {
+      Tile::Player
+    } else {
+      let index = self.pos_to_index_unchecked(pos);
+      Tile::from(self.get_fake_unchecked(index))
+    }
+  }
+}
+
+impl Playable for GameState {
   /// Checks if a move would be valid.
   /// Returns the indices that would be consumed including the old player pos and the new player pos.
   /// So `ret.unwrap().len()-1` would be the amount of tiles consumed.
   /// To get which tiles would be consumed use the game_field or this unmodified game_state to look them up.
   /// You can use any game_field or game_state with the same dimensions to convert the index to a position.
-  pub fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     let mut current_pos = self.player_pos + dir;
     // check if position was valid - is the same as calling dir.valid() obviously
     if current_pos == self.player_pos {
@@ -70,10 +110,7 @@ impl GameState {
 
     let mut moves = Vec::with_capacity(move_amount.into());
     // first push the old player pos
-    moves.push(
-      // TODO: pos_to_index_unchecked 🙃 or just unwrap_unchecked
-      self.pos_to_index(self.player_pos).unwrap(),
-    );
+    moves.push(self.pos_to_index_unchecked(self.player_pos));
     // push the tile that gave us the amount
     moves.push(starting_index);
     // collect positions and check for collision -> BadMove
@@ -91,14 +128,11 @@ impl GameState {
     Ok(moves)
   }
 
-  // TODO: impl TileGrid for GameState {}
-  // TODO: impl TileGrid for GameField {}
-
   /// TODO: give the user a more efficient way to execute a move checked by check_move?
   /// Maybe introduce a CheckedMove type to do that safely?
   ///
   /// For the return see check_move function.
-  pub fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     // commit movements
     let moves = self.check_move(dir)?;
 
@@ -113,12 +147,11 @@ impl GameState {
     // update the moves array
     self
       .moves
-      // TODO: unwrap_unchecked
-      .push((dir, Amount::try_from(moves.len() - 1).unwrap()));
+      .push((dir, Amount::new_unchecked(moves.len() as u8 - 1)));
     Ok(moves)
   }
 
-  pub fn undo_move(&mut self) -> Result<(), GreedError> {
+  fn undo_move(&mut self) -> Result<(), GreedError> {
     let last_move = self.moves.pop().ok_or(GreedError::BadMove)?;
     let (dir, amount) = last_move;
     // dir.valid()?; // always valid we control the moves
@@ -126,7 +159,7 @@ impl GameState {
 
     // 1..amount because we don't want to uncheck the player
     for _ in 1..amount.amount() {
-      let index = self.pos_to_index(self.player_pos).unwrap(); // TODO: unsafe_unwrap
+      let index = self.pos_to_index_unchecked(self.player_pos);
       self.mask.set(index, true);
       self.player_pos += dir;
     }
@@ -135,32 +168,8 @@ impl GameState {
 
     Ok(())
   }
-}
 
-impl TileGrid for GameState {
-  fn dimensions(&self) -> (usize, usize) {
-    self.game_field.dimensions()
-  }
-
-  fn player_pos(&self) -> Pos {
-    self.player_pos
-  }
-}
-
-impl TileGet<usize> for GameState {
-  fn get(&self, index: usize) -> Option<Tile> {
-    todo!()
-  }
-  fn get_unchecked(&self, index: usize) -> Tile {
-    todo!()
-  }
-}
-
-impl TileGet<Pos> for GameState {
-  fn get(&self, pos: Pos) -> Option<Tile> {
-    todo!()
-  }
-  fn get_unchecked(&self, pos: Pos) -> Tile {
-    todo!()
+  fn game_field(&self) -> &GameField {
+    &self.game_field
   }
 }

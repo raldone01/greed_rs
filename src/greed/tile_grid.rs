@@ -54,7 +54,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for ColIterator<'a, T> {
   type Item = StrideTileIterator<'a, T>;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let (x_size, y_size) = self.grid.dimensions();
+    let Size2D { x_size, y_size } = self.grid.dimensions();
     let col = self.start_col;
     if col < self.end_col {
       self.start_col = col + 1;
@@ -76,7 +76,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for ColIterator<'a, T> {
 }
 impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for ColIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
-    let (x_size, y_size) = self.grid.dimensions();
+    let Size2D { x_size, y_size } = self.grid.dimensions();
     if self.start_col < self.end_col {
       self.end_col -= 1;
       Some(StrideTileIterator {
@@ -103,7 +103,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
   type Item = StrideTileIterator<'a, T>;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let (x_size, _y_size) = self.grid.dimensions();
+    let Size2D { x_size, y_size } = self.grid.dimensions();
     let offset = self.offset;
     if offset < self.end {
       self.offset = offset + x_size;
@@ -119,14 +119,14 @@ impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let (x_size, _y_size) = self.grid.dimensions();
+    let Size2D { x_size, y_size } = self.grid.dimensions();
     let remaining = (self.end - self.offset) / x_size;
     (remaining, Some(remaining))
   }
 }
 impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for RowIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
-    let (x_size, _y_size) = self.grid.dimensions();
+    let Size2D { x_size, y_size } = self.grid.dimensions();
     if self.offset < self.end - x_size {
       self.end -= x_size;
       Some(StrideTileIterator {
@@ -186,15 +186,15 @@ impl<'a, T: TileGrid + ?Sized> ExactSizeIterator for TileIterator<'a, T> {}
 pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   /// For the default implementations to work the each
   /// value in the returned tuple must not exceed isize::MAX.
-  fn dimensions(&self) -> (usize, usize);
+  fn dimensions(&self) -> Size2D;
 
   /// Can also be interpreted as the maximum score
   fn tile_count(&self) -> usize {
-    let (x_size, y_size) = self.dimensions();
+    let Size2D { x_size, y_size } = self.dimensions();
     x_size * y_size
   }
   fn valid_pos(&self, pos: Pos) -> Option<Pos> {
-    let (x_size, y_size) = self.dimensions();
+    let Size2D { x_size, y_size } = self.dimensions();
     let x_size = x_size as isize;
     let y_size = y_size as isize;
     if (0..x_size).contains(&pos.x) && (0..y_size).contains(&pos.y) {
@@ -218,7 +218,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
   /// Assumes that the position is valid.
   fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
-    let (x_size, y_size) = self.dimensions();
+    let Size2D { x_size, y_size } = self.dimensions();
     pos.x as usize + (pos.y as usize) * x_size
   }
   fn index_to_pos(&self, index: usize) -> Option<Pos> {
@@ -227,7 +227,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
   /// Assumes that the index is valid
   fn index_to_pos_unchecked(&self, index: usize) -> Pos {
-    let (x_size, y_size) = self.dimensions();
+    let Size2D { x_size, y_size } = self.dimensions();
     let y = (index / x_size) as isize;
     let x = (index % x_size) as isize;
     // let x = (x_size * y_size - y * x_size) as isize;
@@ -243,7 +243,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
 
   fn cols(&self) -> ColIterator<Self> {
-    let (x_size, y_size) = self.dimensions();
+    let Size2D { x_size, y_size } = self.dimensions();
     ColIterator {
       start_col: 0,
       end_col: x_size,

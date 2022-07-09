@@ -79,10 +79,11 @@ impl<'rng, RNG: Rng> TileChooser<'rng, RNG> {
     }
   }
 
-  /// Never returns a player no matter the probability.
-  pub fn choose(&mut self) -> Tile {
+  pub fn choose(&mut self) -> FakeTile {
     let weights = self.difficulty_map.iter().map(|(_, v)| v);
     let dist = WeightedIndex::new(weights).unwrap();
-    self.difficulty_map[dist.sample(self.rng)].0
+
+    // Since Player tiles are removed in `TileChooser::new` this is always safe
+    FakeTile::from_unchecked(self.difficulty_map[dist.sample(self.rng)].0)
   }
 }

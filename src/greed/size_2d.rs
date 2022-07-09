@@ -3,6 +3,7 @@ use std::num::TryFromIntError;
 use super::*;
 
 #[non_exhaustive]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Size2D {
   pub x_size: usize,
   pub y_size: usize,
@@ -11,6 +12,9 @@ pub struct Size2D {
 impl Size2D {
   pub fn new(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }
+  }
+  pub fn tile_count(&self) -> usize {
+    self.x_size * self.y_size
   }
 }
 
