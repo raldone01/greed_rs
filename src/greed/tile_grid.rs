@@ -193,11 +193,14 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     let Size2D { x_size, y_size } = self.dimensions();
     x_size * y_size
   }
-  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+  fn is_valid_pos(&self, pos: Pos) -> bool {
     let Size2D { x_size, y_size } = self.dimensions();
     let x_size = x_size as isize;
     let y_size = y_size as isize;
-    if (0..x_size).contains(&pos.x) && (0..y_size).contains(&pos.y) {
+    (0..x_size).contains(&pos.x) && (0..y_size).contains(&pos.y)
+  }
+  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    if self.is_valid_pos(pos) {
       Some(pos)
     } else {
       None

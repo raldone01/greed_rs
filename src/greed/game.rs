@@ -100,11 +100,11 @@ impl GreedBuilder {
 
   fn gen_rand_seed_str() -> String {
     let mut thread_rng = thread_rng();
-    let uniform = Uniform::new_inclusive('A', 'Z');
-    let random_string = (0..512)
+    let uniform = Uniform::from('A'..='Z');
+
+    (0..512)
       .map(|_| thread_rng.sample(uniform))
-      .collect::<String>();
-    random_string
+      .collect::<String>()
   }
 
   pub fn rand_seed(&mut self) -> &mut Self {
@@ -123,14 +123,14 @@ impl GreedBuilder {
   }
 
   pub fn difficulty_map(&mut self, difficulty_map: DifficultyMap) {
-    self.difficulty_map = Some(difficulty_map.clone());
+    self.difficulty_map = Some(difficulty_map);
   }
 
   pub fn build(&self) -> Greed {
     let seed = self
       .seed
       .clone()
-      .unwrap_or(GreedBuilder::gen_rand_seed_str());
+      .unwrap_or_else(GreedBuilder::gen_rand_seed_str);
 
     let name = self.name.clone().unwrap_or_else(|| seed.clone());
 
@@ -260,10 +260,43 @@ where
 
 impl TileGrid for Greed {
   fn dimensions(&self) -> Size2D {
-    self.game_field().dimensions()
+    self.game_state.dimensions()
   }
   fn player_pos(&self) -> Pos {
-    self.game_field().player_pos()
+    self.game_state.player_pos()
+  }
+
+  // The following functions are implemented as wrappers to make sure they aren't generated again
+  fn tile_count(&self) -> usize {
+    self.game_state.tile_count()
+  }
+
+  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    self.game_state.valid_pos(pos)
+  }
+
+  fn valid_index(&self, index: usize) -> Option<usize> {
+    self.game_state.valid_index(index)
+  }
+
+  fn pos_to_index(&self, pos: Pos) -> Option<usize> {
+    self.game_state.pos_to_index(pos)
+  }
+
+  fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
+    self.game_state.pos_to_index_unchecked(pos)
+  }
+
+  fn index_to_pos(&self, index: usize) -> Option<Pos> {
+    self.game_state.index_to_pos(index)
+  }
+
+  fn index_to_pos_unchecked(&self, index: usize) -> Pos {
+    self.game_state.index_to_pos_unchecked(index)
+  }
+
+  fn score(&self) -> usize {
+    self.game_state.score()
   }
 }
 

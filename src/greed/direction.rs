@@ -4,7 +4,10 @@ use serde::{
   de::{self, Visitor},
   Deserialize, Deserializer, Serialize,
 };
-use std::fmt;
+use std::{
+  fmt,
+  ops::{Mul, Neg},
+};
 
 use super::*;
 
@@ -65,6 +68,25 @@ impl Direction {
     ];
     }
     &DIRS
+  }
+}
+
+impl<T> Mul<T> for Direction
+where
+  Pos: Mul<T>,
+{
+  type Output = <Pos as Mul<T>>::Output;
+
+  fn mul(self, rhs: T) -> Self::Output {
+    Pos::from(self) * rhs
+  }
+}
+
+impl Neg for Direction {
+  type Output = Direction;
+
+  fn neg(self) -> Self::Output {
+    !self
   }
 }
 

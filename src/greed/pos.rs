@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::{
   fmt,
-  ops::{Add, AddAssign, Neg, Sub, SubAssign},
+  ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use super::Direction;
+use super::{Amount, Direction};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -31,25 +31,26 @@ impl From<(isize, isize)> for Pos {
   }
 }
 
+impl From<Direction> for Pos {
+  fn from(dir: Direction) -> Self {
+    Pos::new(
+      isize::from(dir.contains(Direction::RIGHT)) - isize::from(dir.contains(Direction::LEFT)),
+      isize::from(dir.contains(Direction::DOWN)) - isize::from(dir.contains(Direction::UP)),
+    )
+  }
+}
+
 impl Add<Direction> for Pos {
   type Output = Pos;
 
   fn add(self, rhs: Direction) -> Self::Output {
-    Pos::new(
-      self.x + isize::from(rhs.contains(Direction::RIGHT))
-        - isize::from(rhs.contains(Direction::LEFT)),
-      self.y + isize::from(rhs.contains(Direction::DOWN))
-        - isize::from(rhs.contains(Direction::UP)),
-    )
+    self + Pos::from(rhs)
   }
 }
 
 impl AddAssign<Direction> for Pos {
   fn add_assign(&mut self, rhs: Direction) {
-    self.x += isize::from(rhs.contains(Direction::RIGHT));
-    self.x -= isize::from(rhs.contains(Direction::LEFT));
-    self.y += isize::from(rhs.contains(Direction::DOWN));
-    self.y -= isize::from(rhs.contains(Direction::UP));
+    *self += Pos::from(rhs)
   }
 }
 
@@ -89,6 +90,44 @@ impl Sub for Pos {
 impl SubAssign for Pos {
   fn sub_assign(&mut self, rhs: Self) {
     *self += -rhs;
+  }
+}
+
+impl<T: Into<isize>> Mul<T> for Pos {
+  type Output = Pos;
+
+  fn mul(self, rhs: T) -> Self::Output {
+    let mult = rhs.into();
+    Pos {
+      x: self.x * mult,
+      y: self.y * mult,
+    }
+  }
+}
+
+impl Mul<Amount> for Pos {
+  type Output = Pos;
+
+  fn mul(self, rhs: Amount) -> Self::Output {
+    Pos {
+      x: self.x * isize::from(rhs.amount()),
+      y: self.y * isize::from(rhs.amount()),
+    }
+  }
+}
+
+impl<T: Into<isize> + Clone> MulAssign<T> for Pos {
+  fn mul_assign(&mut self, rhs: T) {
+    let mult = rhs.into();
+    self.x *= mult;
+    self.y *= mult;
+  }
+}
+
+impl MulAssign<Amount> for Pos {
+  fn mul_assign(&mut self, rhs: Amount) {
+    self.x *= isize::from(rhs.amount());
+    self.y *= isize::from(rhs.amount());
   }
 }
 

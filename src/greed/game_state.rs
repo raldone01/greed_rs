@@ -44,6 +44,16 @@ impl GameState {
       self.game_field.vec[index]
     }
   }
+
+  fn move_set(&mut self, pos: Pos, dir: Direction, amount: u8, mask: bool) {
+    let mut pos = pos;
+
+    for _ in 0..amount {
+      let index = self.pos_to_index_unchecked(pos);
+      self.mask.set(index, mask);
+      pos += dir;
+    }
+  }
 }
 
 impl TileGrid for GameState {
@@ -156,19 +166,37 @@ impl Playable for GameState {
   }
 
   fn undo_move(&mut self) -> Result<(), GreedError> {
-    let last_move = self.moves.pop().ok_or(GreedError::BadMove)?;
-    let (dir, amount) = last_move;
+    let last_move = self.moves.last().ok_or(GreedError::BadMove)?;
+    let &(dir, amount) = last_move;
     // dir.valid()?; // always valid we control the moves
     let dir = !dir; // invert the direction bit flag magic
 
+    let end_pos = self.player_pos + dir * amount.amount();
+
+    if !self.is_valid_pos(end_pos) {
+      // Restore the moves array back to a "valid" state
+      return Err(GreedError::UndoInvalidMove);
+    }
+
     // 1..amount because we don't want to uncheck the player
-    for _ in 1..amount.amount() {
+    for already_moved_tiles in 0..amount.amount() - 1 {
+      // pos_to_index_unchecked is safe her because the initial player position is considered safe
+      //  and we verified that end_pos is safe. Therefore all positions in between must also be safe.
       let index = self.pos_to_index_unchecked(self.player_pos);
+
+      if self.mask[index] {
+        self.move_set(self.player_pos, !dir, already_moved_tiles, false); // undo the partial undo in order to revert the breakage of the mask.
+
+        return Err(GreedError::UndoInvalidMove);
+      }
+
       self.mask.set(index, true);
       self.player_pos += dir;
     }
     // move the player pos without setting the mask to true
     self.player_pos += dir;
+
+    let _ = self.moves.pop();
 
     Ok(())
   }
