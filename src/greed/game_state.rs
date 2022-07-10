@@ -3,7 +3,7 @@ use super::{
   TileGrid,
 };
 use bitvec::prelude as bv;
-use std::rc::Rc;
+use std::{fmt::Display, rc::Rc};
 
 /// This mutable structure represents a modified game field.
 /// It encodes which fields have been consumed and the player pos.
@@ -22,7 +22,7 @@ impl GameState {
     let player_pos = game_field.player_pos();
     let player_index = game_field.pos_to_index(player_pos).unwrap();
     let mut mask = bv::BitVec::with_capacity(game_field.tile_count());
-    mask.fill(true);
+    mask.resize(game_field.tile_count(), true);
     // https://docs.rs/bitvec/latest/bitvec/vec/struct.BitVec.html#writing-into-a-bit-vector
     mask.set(player_index, false);
 
@@ -210,5 +210,16 @@ impl Playable for GameState {
 
   fn move_count(&self) -> usize {
     self.moves().len()
+  }
+}
+impl Display for GameState {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    self.display_fmt(f)
+  }
+}
+
+impl From<&GameState> for String {
+  fn from(game_field: &GameState) -> Self {
+    game_field.into_string()
   }
 }

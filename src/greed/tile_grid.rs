@@ -1,4 +1,4 @@
-use std::iter::FusedIterator;
+use std::{fmt::Write, iter::FusedIterator};
 
 use super::*;
 
@@ -273,6 +273,27 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
         }
       },
     )
+  }
+
+  fn display_fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    for row in self.rows() {
+      for tile in row {
+        f.write_char(char::from(tile))?;
+      }
+      f.write_char('\n')?;
+    }
+    Ok(())
+  }
+  fn into_string(&self) -> String {
+    // Don't forget about the new line characters
+    let mut out = String::with_capacity(self.tile_count() + self.dimensions().y_size);
+    for row in self.rows() {
+      for tile in row {
+        out.push(char::from(tile));
+      }
+      out.push('\n');
+    }
+    out
   }
 
   fn player_pos(&self) -> Pos;

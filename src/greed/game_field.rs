@@ -51,27 +51,7 @@ impl GameField {
 
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
-    // Don't forget about the new line characters
-    let mut out = String::with_capacity(game_field.tile_count() + game_field.size.y_size);
-    for row in game_field.rows() {
-      for tile in row {
-        out.push(char::from(tile));
-      }
-      out.push('\n');
-    }
-    out
-  }
-}
-
-impl Display for GameField {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    for row in self.rows() {
-      for tile in row {
-        f.write_char(char::from(tile))?;
-      }
-      f.write_char('\n')?;
-    }
-    Ok(())
+    game_field.into_string()
   }
 }
 
@@ -199,5 +179,11 @@ impl TileGet<Pos> for GameField {
       let index = self.pos_to_index_unchecked(pos);
       Tile::from(self.vec[index])
     }
+  }
+}
+
+impl Display for GameField {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    self.display_fmt(f)
   }
 }
