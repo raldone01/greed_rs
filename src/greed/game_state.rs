@@ -107,11 +107,6 @@ impl TileGet<Pos> for GameState {
 }
 
 impl Playable for GameState {
-  /// Checks if a move would be valid.
-  /// Returns the indices that would be consumed including the old player pos and the new player pos.
-  /// So `ret.unwrap().len()-1` would be the amount of tiles consumed.
-  /// To get which tiles would be consumed use the `game_field` or this unmodified `game_state` to look them up.
-  /// You can use any `game_field` or game_state with the same dimensions to convert the index to a position.
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     let mut current_pos = self.player_pos + dir;
     // check if position was valid - is the same as calling dir.valid() obviously
@@ -131,8 +126,6 @@ impl Playable for GameState {
     // TODO: try_collect
 
     let mut moves = Vec::with_capacity(move_amount.into());
-    // first push the old player pos
-    moves.push(self.pos_to_index_unchecked(self.player_pos));
     // push the tile that gave us the amount
     moves.push(starting_index);
     // collect positions and check for collision -> BadMove
@@ -172,7 +165,7 @@ impl Playable for GameState {
     // update the moves array
     self
       .moves
-      .push((dir, Amount::new_unchecked(moves.len() as u8 - 1)));
+      .push((dir, Amount::new_unchecked(moves.len() as u8)));
     Ok(moves)
   }
 
