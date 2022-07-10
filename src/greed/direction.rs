@@ -8,8 +8,7 @@ use std::{
   fmt,
   ops::{Mul, Neg},
 };
-
-use super::{GreedError, Pos};
+use super::{PlayableError, Pos};
 
 bitflags! {
   pub struct Direction: u8 {
