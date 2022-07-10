@@ -1,4 +1,4 @@
-use super::*;
+use super::Tile;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use thiserror::Error;

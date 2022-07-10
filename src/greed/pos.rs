@@ -50,7 +50,21 @@ impl Add<Direction> for Pos {
 
 impl AddAssign<Direction> for Pos {
   fn add_assign(&mut self, rhs: Direction) {
-    *self += Pos::from(rhs)
+    *self += Pos::from(rhs);
+  }
+}
+
+impl Sub<Direction> for Pos {
+  type Output = Pos;
+
+  fn sub(self, rhs: Direction) -> Self::Output {
+    self - Pos::from(rhs)
+  }
+}
+
+impl SubAssign<Direction> for Pos {
+  fn sub_assign(&mut self, rhs: Direction) {
+    *self -= Pos::from(rhs);
   }
 }
 

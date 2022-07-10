@@ -1,4 +1,4 @@
-use super::*;
+use super::Pos;
 use std::num::TryFromIntError;
 use thiserror::Error;
 
