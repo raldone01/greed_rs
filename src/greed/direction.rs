@@ -13,10 +13,10 @@ use super::{GreedError, Pos};
 
 bitflags! {
   pub struct Direction: u8 {
-    const UP    = 0b0000_0001;
-    const DOWN  = 0b0000_0010;
-    const LEFT  = 0b0000_0100;
-    const RIGHT = 0b0000_1000;
+    const UP    = 0b0000_0001; // 1
+    const DOWN  = 0b0000_0010; // 2
+    const LEFT  = 0b0000_0100; // 4
+    const RIGHT = 0b0000_1000; // 8
   }
 }
 
