@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
-
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -8,7 +8,9 @@ pub enum AmountConverError {
   ToBig,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Serialize, Deserialize)]
+#[serde(try_from = "u8")]
+#[serde(into = "u8")]
 pub struct Amount(u8);
 
 impl Debug for Amount {

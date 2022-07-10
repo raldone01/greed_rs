@@ -1,5 +1,5 @@
 use super::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use rand::distributions::Uniform;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -25,7 +25,7 @@ pub struct GameMeta {
   #[serde(default)]
   #[serde_as(as = "Option<Vec<(_, _)>>")]
   pub difficulty_map: Option<DifficultyMap>,
-  pub moves: Option<Vec<Direction>>,
+  pub moves: Option<Vec<(Direction, Amount)>>,
   pub score: Option<usize>,
   /// A score based on time spent, moves (counting undos) and a few more factors.
   /// This value can't be verified and is designed to increase human engagement.
@@ -56,14 +56,7 @@ impl GameMeta {
         .try_into()
         .expect("How the hell did you play that long? (Create an issue)"),
       difficulty_map: greed.difficulty_map.clone(),
-      moves: Some(
-        greed
-          .game_state
-          .moves()
-          .iter()
-          .map(|(dir, _)| *dir)
-          .collect(),
-      ),
+      moves: Some(greed.game_state.moves().to_vec()),
       score: Some(greed.score()),
       human_score: Some(greed.human_score()),
       undos: Some(greed.undos),
@@ -190,6 +183,71 @@ impl Greed {
     }
   }
 
+  // pub fn load_from_reader() {}
+  // pub fn save_to_writer() {}
+
+  pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
+    // Finds the last index of } which must indicate the end of the meta data
+    let meta_end_pos = str
+      .char_indices()
+      .rev()
+      .find(|&(_, char)| char == '}')
+      // +1 to include } and +1 to include \n
+      .map_or(0, |(index, _)| index + 2);
+    let game_meta = if meta_end_pos != 0 {
+      json5::from_str::<GameMeta>(
+        str
+          .get(0..meta_end_pos)
+          .ok_or(GreedParserError::LeadingEmptyLine)?,
+      )
+      .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
+    } else {
+      GameMeta::default()
+    };
+    let game_field = GameField::try_from(&str[meta_end_pos..])
+      .map_err(|cause| GreedParserError::GameFieldParserError { cause })?;
+
+    let name = game_meta
+      .name
+      .or_else(|| game_meta.seed.clone())
+      .unwrap_or_else(|| {
+        Local::now()
+          .format("Custom Game from %d/%b/%Y %H:%M:%S")
+          .to_string()
+      });
+    Ok(Self {
+      seed: game_meta.seed,
+      name,
+      started_instant: game_meta
+        .utc_started_ms
+        .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
+      finished_instant: game_meta
+        .utc_finished_ms
+        .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
+      started_session: Instant::now(),
+      time_spent: Duration::from_millis(
+        game_meta
+          .time_spent_ms
+          .try_into()
+          .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
+      ),
+      difficulty_map: game_meta.difficulty_map,
+      undos: game_meta.undos.unwrap_or(0),
+      game_state: GameState::new_with_moves(
+        Rc::new(game_field),
+        game_meta.moves.unwrap_or_else(|| Vec::new()),
+      ),
+    })
+  }
+
+  pub fn save_to_string(&self) -> String {
+    let meta = GameMeta::new(self);
+    let mut str = json5::to_string(&meta).unwrap();
+    str.push('\n');
+    str += &String::from(self.game_field());
+    str
+  }
+
   pub fn game_meta(&self) -> GameMeta {
     GameMeta::new(self)
   }
@@ -214,12 +272,20 @@ impl Greed {
     self.undos
   }
 
-  pub fn validate_replay(game_meta: &GameMeta) {
+  /// Validates the moves array
+  pub fn validate_moves() -> Result<(), MoveValidationError> {
     todo!()
   }
 
-  pub fn human_score(&self) -> usize {
+  /// Validates if the seed reproduces the saved game state and checks that all moves are valid.
+  /// Also uses a difficulty map if available.
+  pub fn validate_reproducibility() -> Result<(), ReproductionError> {
     todo!()
+  }
+
+  /// TODO: Returns 0 for now
+  pub fn human_score(&self) -> usize {
+    0
   }
 }
 
@@ -228,15 +294,15 @@ impl Playable for Greed {
     self.game_state.game_field()
   }
 
-  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     self.game_state.check_move(dir)
   }
 
-  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     self.game_state.move_(dir)
   }
 
-  fn undo_move(&mut self) -> Result<(), GreedError> {
+  fn undo_move(&mut self) -> Result<(), PlayableError> {
     self.game_state.undo_move().map(|_| self.undos += 1)
   }
 
@@ -297,37 +363,6 @@ impl TileGrid for Greed {
 
   fn score(&self) -> usize {
     self.game_state.score()
-  }
-}
-
-impl TryFrom<&str> for Greed {
-  type Error = GameFieldParserError;
-
-  fn try_from(value: &str) -> Result<Self, Self::Error> {
-    // Finds the last index of } which must indicate the end of the meta data
-    let meta_end_pos = value
-      .char_indices()
-      .rev()
-      .find(|&(_, char)| char == '}')
-      // +1 to include } and +1 to include \n
-      .map(|(index, _)| index + 2)
-      .unwrap_or(0);
-    let game_meta = if meta_end_pos != 0 {
-      json5::from_str::<GameMeta>(
-        value
-          .get(0..meta_end_pos)
-          .ok_or(GameFieldParserError::EmptyLine)?,
-      )
-      .map_err(|cause| GameFieldParserError::InvalidMetaData { cause })?
-    } else {
-      GameMeta::default()
-    };
-    let game_field = GameField::try_from(&value[meta_end_pos..])?;
-    todo!();
-    //Ok(Self {
-    //  meta: game_meta,
-    //  field: game_field,
-    //})
   }
 }
 

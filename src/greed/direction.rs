@@ -30,11 +30,11 @@ impl Direction {
       | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT))
   }
 
-  pub fn valid(self) -> Result<(), GreedError> {
+  pub fn valid(self) -> Result<(), PlayableError> {
     if self.is_valid() {
       Ok(())
     } else {
-      Err(GreedError::InvalidDirection)
+      Err(PlayableError::InvalidDirection)
     }
   }
 
