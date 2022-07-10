@@ -1,5 +1,5 @@
 use super::{
-  Amount, Direction, FakeTile, GameField, GreedError, Playable, Pos, Size2D, Tile, TileGet,
+  Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile, TileGet,
   TileGrid,
 };
 use bitvec::prelude as bv;
@@ -21,7 +21,7 @@ pub struct GameState {
 }
 
 impl GameState {
-  pub fn new(game_field: Rc<GameField>) -> Self {
+  pub(super) fn new_with_moves(game_field: Rc<GameField>, moves: Vec<(Direction, Amount)>) -> Self {
     let player_pos = game_field.player_pos();
     let player_index = game_field.pos_to_index(player_pos).unwrap();
     let mut mask = bv::BitVec::with_capacity(game_field.tile_count());
@@ -32,9 +32,13 @@ impl GameState {
     Self {
       mask,
       game_field,
-      moves: Vec::new(),
+      moves,
       player_pos,
     }
+  }
+
+  pub fn new(game_field: Rc<GameField>) -> Self {
+    Self::new_with_moves(game_field, Vec::new())
   }
 
   pub fn moves(&self) -> &[(Direction, Amount)] {
@@ -107,19 +111,21 @@ impl TileGet<Pos> for GameState {
 }
 
 impl Playable for GameState {
-  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn check_move(&self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     let mut current_pos = self.player_pos + dir;
     // check if position was valid - is the same as calling dir.valid() obviously
     if current_pos == self.player_pos {
-      return Err(GreedError::InvalidDirection);
+      return Err(PlayableError::InvalidDirection);
     }
 
-    let starting_index = self.pos_to_index(current_pos).ok_or(GreedError::BadMove)?;
+    let starting_index = self
+      .pos_to_index(current_pos)
+      .ok_or(PlayableError::BadMove)?;
     // The first tile the player moves to
     // Tells us how many tiles to move
     let starting_tile = self.get_fake_unchecked(starting_index);
     if starting_tile == FakeTile::EMTPY {
-      return Err(GreedError::BadMove);
+      return Err(PlayableError::BadMove);
     }
     let move_amount = starting_tile.amount();
 
@@ -131,10 +137,12 @@ impl Playable for GameState {
     // collect positions and check for collision -> BadMove
     for _ in 1..move_amount {
       current_pos += dir;
-      let index = self.pos_to_index(current_pos).ok_or(GreedError::BadMove)?;
+      let index = self
+        .pos_to_index(current_pos)
+        .ok_or(PlayableError::BadMove)?;
       let tile = self.get_fake_unchecked(index);
       if tile == FakeTile::EMTPY {
-        return Err(GreedError::BadMove);
+        return Err(PlayableError::BadMove);
       }
       moves.push(index)
     }
@@ -147,7 +155,7 @@ impl Playable for GameState {
   /// Maybe introduce a CheckedMove type to do that safely?
   ///
   /// For the return see check_move function.
-  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, GreedError> {
+  fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     // commit movements
     let moves = self.check_move(dir)?;
 
@@ -169,8 +177,8 @@ impl Playable for GameState {
     Ok(moves)
   }
 
-  fn undo_move(&mut self) -> Result<(), GreedError> {
-    let last_move = self.moves.last().ok_or(GreedError::BadMove)?;
+  fn undo_move(&mut self) -> Result<(), PlayableError> {
+    let last_move = self.moves.last().ok_or(PlayableError::BadMove)?;
     let &(dir, amount) = last_move;
     // dir.valid()?; // always valid we control the moves
     let dir = !dir; // invert the direction bit flag magic
@@ -179,7 +187,7 @@ impl Playable for GameState {
 
     if !self.is_valid_pos(end_pos) {
       // Restore the moves array back to a "valid" state
-      return Err(GreedError::UndoInvalidMove);
+      return Err(PlayableError::UndoInvalidMove);
     }
     // 1..amount because we don't want to uncheck the player
     for already_moved_tiles in 0..amount.amount() {
@@ -191,7 +199,7 @@ impl Playable for GameState {
       if self.player_pos != end_pos && self.mask[index] {
         self.move_set(self.player_pos, !dir, already_moved_tiles, false); // undo the partial undo in order to revert the breakage of the mask.
 
-        return Err(GreedError::UndoInvalidMove);
+        return Err(PlayableError::UndoInvalidMove);
       }
 
       self.mask.set(index, true);

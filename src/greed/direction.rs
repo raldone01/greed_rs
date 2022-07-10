@@ -8,8 +8,7 @@ use std::{
   fmt,
   ops::{Mul, Neg},
 };
-
-use super::{GreedError, Pos};
+use super::{PlayableError, Pos};
 
 bitflags! {
   pub struct Direction: u8 {
@@ -30,11 +29,11 @@ impl Direction {
       | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT))
   }
 
-  pub fn valid(self) -> Result<(), GreedError> {
+  pub fn valid(self) -> Result<(), PlayableError> {
     if self.is_valid() {
       Ok(())
     } else {
-      Err(GreedError::InvalidDirection)
+      Err(PlayableError::InvalidDirection)
     }
   }
 

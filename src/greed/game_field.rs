@@ -1,6 +1,6 @@
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Write};
+use std::fmt::{Debug, Display};
 
 use super::{
   FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Size2D, Tile, TileChooser, TileGet,

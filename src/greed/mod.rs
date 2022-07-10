@@ -1,11 +1,12 @@
 mod game;
-#[allow(unused_imports)]
-use game::*;
 pub use game::{GameMeta, Greed};
 
 pub mod greed_error;
 /// Make errors available internally
-use greed_error::{GameFieldParserError, GreedError, TileParseError};
+use greed_error::{
+  GameFieldParserError, GreedParserError, MoveValidationError, PlayableError, ReproductionError,
+  TileParseError,
+};
 
 mod tile;
 pub use tile::Tile;
