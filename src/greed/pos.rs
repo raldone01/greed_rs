@@ -50,7 +50,7 @@ impl Add<Direction> for Pos {
 
 impl AddAssign<Direction> for Pos {
   fn add_assign(&mut self, rhs: Direction) {
-    *self += Pos::from(rhs)
+    *self += Pos::from(rhs);
   }
 }
 

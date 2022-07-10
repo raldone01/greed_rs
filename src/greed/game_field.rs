@@ -2,7 +2,10 @@ use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Write};
 
-use super::*;
+use super::{
+  FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Size2D, Tile, TileChooser, TileGet,
+  TileGrid,
+};
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
@@ -52,9 +55,9 @@ impl From<&GameField> for String {
     let mut out = String::with_capacity(game_field.tile_count() + game_field.size.y_size);
     for row in game_field.rows() {
       for tile in row {
-        out.push(char::from(tile))
+        out.push(char::from(tile));
       }
-      out.push('\n')
+      out.push('\n');
     }
     out
   }
@@ -64,9 +67,9 @@ impl Display for GameField {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     for row in self.rows() {
       for tile in row {
-        f.write_char(char::from(tile))?
+        f.write_char(char::from(tile))?;
       }
-      f.write_char('\n')?
+      f.write_char('\n')?;
     }
     Ok(())
   }

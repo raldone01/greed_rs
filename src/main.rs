@@ -1,4 +1,4 @@
-#![allow(unused_variables, dead_code)]
+#![allow(dead_code)]
 
 mod greed;
 

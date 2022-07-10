@@ -1,4 +1,7 @@
-use super::*;
+use super::{
+  Amount, Direction, FakeTile, GameField, GreedError, Playable, Pos, Size2D, Tile, TileGet,
+  TileGrid,
+};
 use bitvec::prelude as bv;
 use std::rc::Rc;
 
@@ -102,8 +105,8 @@ impl Playable for GameState {
   /// Checks if a move would be valid.
   /// Returns the indices that would be consumed including the old player pos and the new player pos.
   /// So `ret.unwrap().len()-1` would be the amount of tiles consumed.
-  /// To get which tiles would be consumed use the game_field or this unmodified game_state to look them up.
-  /// You can use any game_field or game_state with the same dimensions to convert the index to a position.
+  /// To get which tiles would be consumed use the `game_field` or this unmodified `game_state` to look them up.
+  /// You can use any `game_field` or game_state with the same dimensions to convert the index to a position.
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, GreedError> {
     let mut current_pos = self.player_pos + dir;
     // check if position was valid - is the same as calling dir.valid() obviously

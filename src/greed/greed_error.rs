@@ -1,4 +1,4 @@
-use super::*;
+use super::Pos;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]

@@ -5,7 +5,7 @@ use serde::{
 };
 use std::fmt;
 
-use super::*;
+use super::TileParseError;
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, TryFromPrimitive)]
 #[repr(u8)]
@@ -86,7 +86,7 @@ impl From<Tile> for char {
       // x if let Some(amount) = self.amount() => { Ok(()) } Unstable damn
       _ => tile
         .amount()
-        .map(|a| char::from_digit(a as u32, 10).unwrap())
+        .map(|a| char::from_digit(u32::from(a), 10).unwrap())
         .unwrap(),
     }
   }

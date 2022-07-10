@@ -1,4 +1,7 @@
-use super::*;
+use super::{
+  DifficultyMap, DifficultyMapExt, Direction, GameField, GameFieldParserError, GameState,
+  GreedError, Playable, Pos, Size2D, Tile, TileChooser, TileGet, TileGrid,
+};
 use chrono::{DateTime, Utc};
 use rand::distributions::Uniform;
 use rand::prelude::*;
@@ -214,7 +217,7 @@ impl Greed {
     self.undos
   }
 
-  pub fn validate_replay(game_meta: &GameMeta) {
+  pub fn validate_replay(_game_meta: &GameMeta) {
     todo!()
   }
 
@@ -333,7 +336,7 @@ impl TryFrom<&str> for Greed {
 
 impl From<Greed> for String {
   fn from(greed: Greed) -> Self {
-    let out = String::with_capacity(1024 + greed.game_field().tile_count());
+    let _out = String::with_capacity(1024 + greed.game_field().tile_count());
     todo!("Save game meta then write game field")
   }
 }

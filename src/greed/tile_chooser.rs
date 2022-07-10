@@ -2,14 +2,15 @@ use lazy_static::lazy_static;
 use rand::{distributions::WeightedIndex, prelude::*};
 use std::collections::HashMap;
 
-use super::*;
+use super::{FakeTile, Tile};
 
 pub type DifficultyMap = HashMap<Tile, f64>;
 
 pub trait DifficultyMapExt {
   /// TODO remove
+  #[deprecated]
   fn saturate_difficulties(&mut self) -> &Self;
-  /// TODO rename to calculate_percentages
+  /// TODO rename to `calculate_percentages`
   fn normalize_difficulties(&mut self) -> &Self;
   fn default_difficulties() -> &'static Self;
   fn new_difficulty_map() -> Self;

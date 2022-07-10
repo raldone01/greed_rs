@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
 
-use super::*;
+use super::Pos;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]

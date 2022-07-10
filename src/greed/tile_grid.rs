@@ -103,7 +103,7 @@ impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
   type Item = StrideTileIterator<'a, T>;
 
   fn next(&mut self) -> Option<Self::Item> {
-    let Size2D { x_size, y_size } = self.grid.dimensions();
+    let x_size = self.grid.dimensions().x_size;
     let offset = self.offset;
     if offset < self.end {
       self.offset = offset + x_size;
@@ -119,14 +119,14 @@ impl<'a, T: TileGrid + ?Sized> Iterator for RowIterator<'a, T> {
   }
 
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let Size2D { x_size, y_size } = self.grid.dimensions();
+    let x_size = self.grid.dimensions().x_size;
     let remaining = (self.end - self.offset) / x_size;
     (remaining, Some(remaining))
   }
 }
 impl<'a, T: TileGrid + ?Sized> DoubleEndedIterator for RowIterator<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
-    let Size2D { x_size, y_size } = self.grid.dimensions();
+    let x_size = self.grid.dimensions().x_size;
     if self.offset < self.end - x_size {
       self.end -= x_size;
       Some(StrideTileIterator {
@@ -221,7 +221,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
   /// Assumes that the position is valid.
   fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
-    let Size2D { x_size, y_size } = self.dimensions();
+    let x_size = self.dimensions().x_size;
     pos.x as usize + (pos.y as usize) * x_size
   }
   fn index_to_pos(&self, index: usize) -> Option<Pos> {
@@ -230,7 +230,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
   /// Assumes that the index is valid
   fn index_to_pos_unchecked(&self, index: usize) -> Pos {
-    let Size2D { x_size, y_size } = self.dimensions();
+    let x_size = self.dimensions().x_size;
     let y = (index / x_size) as isize;
     let x = (index % x_size) as isize;
     // let x = (x_size * y_size - y * x_size) as isize;
@@ -246,7 +246,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
   }
 
   fn cols(&self) -> ColIterator<Self> {
-    let Size2D { x_size, y_size } = self.dimensions();
+    let x_size = self.dimensions().x_size;
     ColIterator {
       start_col: 0,
       end_col: x_size,

@@ -5,7 +5,7 @@ pub use game::{GameMeta, Greed};
 
 pub mod greed_error;
 /// Make errors available internally
-use greed_error::*;
+use greed_error::{GameFieldParserError, GreedError, TileParseError};
 
 mod tile;
 pub use tile::Tile;
