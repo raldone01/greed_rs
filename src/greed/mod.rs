@@ -31,6 +31,9 @@ pub use tile_grid::{
   ColIterator, RowIterator, StrideTileIterator, TileGet, TileGrid, TileIterator,
 };
 
+mod seed;
+pub use seed::Seed;
+
 mod tile_chooser;
 /// Internal
 use tile_chooser::{DifficultyMap, DifficultyMapExt, TileChooser};

@@ -164,15 +164,7 @@ impl Greed {
     name: String,
     difficulty_map: DifficultyMap,
   ) -> Self {
-    let mut hasher = Sha512::new();
-    hasher.update(&string_seed);
-    let hash = hasher.finalize();
-    let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
-    // init the random gen with the first 16 bytes of the hash
-    let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
-    #[allow(clippy::or_fun_call)] // TODO: Create an issue
-    let mut tile_chooser = TileChooser::new(&mut rng, &difficulty_map);
-    let game_field = Rc::from(GameField::new_random(&mut tile_chooser, size));
+    let game_field = Rc::from(GameField::from_seed(&string_seed, size, &difficulty_map));
 
     Greed {
       seed: Some(string_seed),
@@ -187,10 +179,23 @@ impl Greed {
     }
   }
 
+  pub fn name(&self) -> &str {
+    &self.name
+  }
+
+  pub fn seed(&self) -> Option<&str> {
+    self.seed.as_ref().map(String::as_ref)
+  }
+
+  pub fn difficulty_map(&self) -> Option<&DifficultyMap> {
+    self.difficulty_map.as_ref()
+  }
+
   // pub fn load_from_reader() {}
   // pub fn save_to_writer() {}
 
   pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
+    // load the meta data if available
     // Finds the last index of } which must indicate the end of the meta data
     let meta_end_pos = str
       .char_indices()
@@ -208,8 +213,31 @@ impl Greed {
     } else {
       GameMeta::default()
     };
-    let game_field = GameField::try_from(&str[meta_end_pos..])
-      .map_err(|cause| GreedParserError::GameFieldParserError { cause })?;
+
+    // load last_game_field if available
+    let game_field_str = &str[meta_end_pos..];
+    let last_game_field = if !game_field_str.is_empty() {
+      Some(
+        GameField::try_from(game_field_str)
+          .map_err(|cause| GreedParserError::GameFieldParserError { cause })?,
+      )
+    } else {
+      None
+    };
+
+    // load inital_game_field
+    let inital_game_field = game_meta.inital_game_field.clone().unwrap();
+    // TODO: .or_else(|| game_meta.seed.map(|seed| GameField::from_seed(seed)));
+
+    // if moves and inital_game_field -> gen last_game_field ff
+    // if moves and seed -> gen last_game_field ff
+
+    // if conflicting last_game_field and initial_game_field?
+    // if last_game_field and inital_game_field then compute mask?
+
+    let game_field = game_meta
+      .inital_game_field
+      .ok_or_else(|| GameField::try_from(game_field_str));
 
     let name = game_meta
       .name
@@ -219,6 +247,8 @@ impl Greed {
           .format("Custom Game from %d/%b/%Y %H:%M:%S")
           .to_string()
       });
+
+    todo!();
     Ok(Self {
       seed: game_meta.seed,
       name,
@@ -238,7 +268,7 @@ impl Greed {
       difficulty_map: game_meta.difficulty_map,
       undos: game_meta.undos.unwrap_or(0),
       game_state: GameState::new_with_moves(
-        Rc::new(game_field),
+        Rc::new(game_field.unwrap()), // TODO: remove unwrap
         game_meta.moves.unwrap_or_else(|| Vec::new()),
       ),
     })
@@ -248,7 +278,7 @@ impl Greed {
     let meta = GameMeta::new(self);
     let mut str = json5::to_string(&meta).unwrap();
     str.push('\n');
-    str += &String::from(self.game_field());
+    str += &String::from(self.game_state());
     str
   }
 

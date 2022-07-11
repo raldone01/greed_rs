@@ -9,35 +9,41 @@ mod termion;
 
 mod ui;
 
-use std::rc::Rc;
-
 #[cfg(feature = "crossterm")]
 use crate::crossterm::run;
-use crate::greed::{GameState, Playable};
+use crate::greed::{Greed, Playable};
 #[cfg(feature = "termion")]
 use crate::termion::run;
 
 fn main() {
-  // let game = greed::Greed::try_from("1034@\n17817\n").unwrap();
-  // println!("FIELD:\n{}", game.field());
-  #[allow(unused_mut)]
-  let mut field = Rc::new(greed::GameField::try_from("0133@\n11117\n").unwrap());
-  println!("FIELD:\n{}", field);
+  let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 
-  let mut state = GameState::new(field);
+  println!("Initial field:\n{}", greed.game_state());
 
-  state.move_(greed::Direction::LEFT).unwrap();
-  println!("move_left:\n{}", state);
-  state.move_(greed::Direction::DOWN).unwrap();
-  println!("move_down:\n{}", state);
-  state.move_(greed::Direction::RIGHT).unwrap();
-  println!("move_right:\n{}", state);
+  greed.move_(greed::Direction::LEFT).unwrap();
+  println!("move_left:\n{}", greed.game_state());
+  greed.move_(greed::Direction::DOWN).unwrap();
+  println!("move_down:\n{}", greed.game_state());
+  greed.move_(greed::Direction::RIGHT).unwrap();
+  println!("move_right:\n{}", greed.game_state());
 
-  state.undo_move().unwrap();
-  println!("undo_move:\n{}", state);
-  state.undo_move().unwrap();
-  println!("undo_move:\n{}", state);
-  state.undo_move().unwrap();
-  println!("undo_move:\n{}", state);
-  println!("Final State\n{:?}", state);
+  greed.undo_move().unwrap();
+  println!("undo_move:\n{}", greed.game_state());
+  greed.undo_move().unwrap();
+  println!("undo_move:\n{}", greed.game_state());
+  greed.undo_move().unwrap();
+  println!("undo_move:\n{}", greed.game_state());
+  println!("Final State:\n{:?}", greed.game_state());
+
+  println!("NAME: {}", greed.name());
+
+  greed.move_(greed::Direction::LEFT).unwrap();
+  println!("move_left:\n{}", greed.game_state());
+
+  let save_file = greed.save_to_string();
+  println!("Save File:\n{}", save_file);
+  let parsed_greed = Greed::load_from_string(&save_file).unwrap();
+  let new_save_file = parsed_greed.save_to_string();
+  println!("New save File:\n{}", new_save_file);
+  assert_eq!(save_file, new_save_file)
 }

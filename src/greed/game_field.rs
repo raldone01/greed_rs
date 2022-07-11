@@ -1,8 +1,13 @@
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display};
+use sha2::{Digest, Sha512};
+use std::{
+  fmt::{Debug, Display},
+  rc::Rc,
+};
 
 use super::{
+  tile_chooser::{DifficultyMap, DifficultyMapExt},
   FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Size2D, Tile, TileChooser, TileGet,
   TileGrid,
 };
@@ -32,7 +37,7 @@ impl GameField {
     Size2D::new(79, 21)
   }
 
-  pub(super) fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
+  fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
     let vec = (0..size.tile_count())
       .map(|_| tile_chooser.choose())
       .collect();
@@ -46,6 +51,19 @@ impl GameField {
       size,
       player_pos,
     }
+  }
+
+  pub fn from_seed(string_seed: &str, size: Size2D, difficulty_map: &DifficultyMap) -> GameField {
+    let mut hasher = Sha512::new();
+    hasher.update(&string_seed);
+    let hash = hasher.finalize();
+    let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
+    // init the random gen with the first 16 bytes of the hash
+    let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
+    #[allow(clippy::or_fun_call)] // TODO: Create an issue
+    let mut tile_chooser = TileChooser::new(&mut rng, difficulty_map);
+    let game_field = GameField::new_random(&mut tile_chooser, size);
+    game_field
   }
 }
 

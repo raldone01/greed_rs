@@ -8,6 +8,8 @@ use super::{Amount, Direction};
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "(isize, isize)")]
+#[serde(into = "(isize, isize)")]
 pub struct Pos {
   pub x: isize,
   pub y: isize,

@@ -5,6 +5,8 @@ use super::Pos;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[serde(from = "(usize, usize)")]
+#[serde(into = "(usize, usize)")]
 pub struct Size2D {
   pub x_size: usize,
   pub y_size: usize,
