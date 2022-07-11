@@ -30,7 +30,7 @@ impl TileGrid for GameField {
 
 impl GameField {
   pub fn default_classic_game_dimensions() -> Size2D {
-    Size2D::new(79, 21)
+    Size2D::new_unchecked(79, 21)
   }
 
   fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
@@ -136,7 +136,7 @@ impl TryFrom<&str> for GameField {
       return Err(GameFieldParserError::NoTrailingNewLine);
     }
 
-    let size = Size2D::new(x_size.unwrap(), y_pos);
+    let size = Size2D::new_unchecked(x_size.unwrap(), y_pos);
     assert!(vec.len() == size.tile_count());
     let vec = vec.into_boxed_slice();
 

@@ -72,12 +72,6 @@ impl SizeProbGreedBuilder {
     let size = self
       .size
       .unwrap_or_else(GameField::default_classic_game_dimensions);
-    let Size2D { x_size, y_size, .. } = size;
-    if x_size < 1 || y_size < 1 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
-      // TODO: maybe add this check to seed somewhere
-      // TODO Fix
-      //return Err(GameFieldParserError::InvalidSize);
-    }
 
     let seed = Seed::new_random(size, self.tile_probs);
     SeedGreedBuilder {

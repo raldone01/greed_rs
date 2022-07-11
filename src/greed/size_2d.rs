@@ -14,8 +14,15 @@ pub struct Size2D {
 }
 
 impl Size2D {
-  pub fn new(x_size: usize, y_size: usize) -> Self {
+  pub(super) fn new_unchecked(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }
+  }
+  pub fn new(x_size: usize, y_size: usize) -> Self {
+    // TODO
+    if x_size < 1 || y_size < 1 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
+      //return Err(GameFieldParserError::InvalidSize);
+    }
+    todo!()
   }
   pub fn tile_count(&self) -> usize {
     self.x_size * self.y_size

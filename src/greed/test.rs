@@ -22,7 +22,7 @@ mod seed_test {
       Seed::try_from("ABCD_abcd_1234#6x9#112233445566778899").unwrap(),
       Seed::new(
         UserString::try_from("ABCD_abcd_1234").unwrap(),
-        Size2D::new(6, 9),
+        Size2D::new_unchecked(6, 9),
         Some(TileProbs::from(TEST_TILE_PROBS))
       )
     )
@@ -33,7 +33,7 @@ mod seed_test {
       Seed::try_from("ABCD_abcd_1234#6x9").unwrap(),
       Seed::new(
         UserString::try_from("ABCD_abcd_1234").unwrap(),
-        Size2D::new(6, 9),
+        Size2D::new_unchecked(6, 9),
         None
       )
     )
@@ -43,7 +43,7 @@ mod seed_test {
     assert_eq!(
       &String::from(&Seed::new(
         UserString::try_from("ABCD_abcd_1234").unwrap(),
-        Size2D::new(6, 9),
+        Size2D::new_unchecked(6, 9),
         Some(TileProbs::from(TEST_TILE_PROBS))
       )),
       "ABCD_abcd_1234#6x9#112233445566778899",
@@ -54,7 +54,7 @@ mod seed_test {
     assert_eq!(
       &String::from(&Seed::new(
         UserString::try_from("ABCD_abcd_1234").unwrap(),
-        Size2D::new(6, 9),
+        Size2D::new_unchecked(6, 9),
         None
       )),
       "ABCD_abcd_1234#6x9",

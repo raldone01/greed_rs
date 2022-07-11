@@ -1,5 +1,6 @@
-mod game;
-pub use game::{GameMeta, Greed};
+#[allow(clippy::module_inception)]
+mod greed;
+pub use greed::{GameMeta, Greed};
 
 pub mod greed_error;
 /// Make errors available internally
