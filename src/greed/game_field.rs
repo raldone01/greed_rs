@@ -1,15 +1,11 @@
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
-use std::{
-  fmt::{Debug, Display},
-  rc::Rc,
-};
+use std::fmt::{Debug, Display};
 
 use super::{
-  tile_chooser::{DifficultyMap, DifficultyMapExt},
-  FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Size2D, Tile, TileChooser, TileGet,
-  TileGrid,
+  FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Seed, Size2D, Tile, TileChooser,
+  TileGet, TileGrid,
 };
 
 /// This immutable structure represents the initial state of a game of greed.
@@ -53,23 +49,22 @@ impl GameField {
     }
   }
 
-  pub fn from_seed(string_seed: &str, size: Size2D, difficulty_map: &DifficultyMap) -> GameField {
+  pub fn from_seed(seed: &Seed) -> GameField {
     let mut hasher = Sha512::new();
-    hasher.update(&string_seed);
+    hasher.update(seed.user_str());
     let hash = hasher.finalize();
     let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
     // init the random gen with the first 16 bytes of the hash
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
     #[allow(clippy::or_fun_call)] // TODO: Create an issue
-    let mut tile_chooser = TileChooser::new(&mut rng, difficulty_map);
-    let game_field = GameField::new_random(&mut tile_chooser, size);
-    game_field
+    let mut tile_chooser = TileChooser::new(&mut rng, seed.tile_probabilities());
+    GameField::new_random(&mut tile_chooser, seed.size())
   }
 }
 
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
-    game_field.into_string()
+    game_field.as_string()
   }
 }
 

@@ -236,7 +236,7 @@ impl Debug for GameState {
 
         write!(f, "{}", self.mask[index] as u8)?;
       }
-      writeln!(f, "")?;
+      writeln!(f)?;
     }
 
     writeln!(f, "Field: ")?;
@@ -246,6 +246,6 @@ impl Debug for GameState {
 
 impl From<&GameState> for String {
   fn from(game_field: &GameState) -> Self {
-    game_field.into_string()
+    game_field.as_string()
   }
 }

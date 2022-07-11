@@ -15,7 +15,7 @@ mod pos;
 pub use pos::Pos;
 
 mod size_2d;
-pub use size_2d::Size2D;
+pub use size_2d::{Size2D, Size2DConversionError};
 
 mod game_field;
 pub use game_field::GameField;
@@ -30,13 +30,15 @@ mod tile_grid;
 pub use tile_grid::{
   ColIterator, RowIterator, StrideTileIterator, TileGet, TileGrid, TileIterator,
 };
+mod tile_probs;
+pub use tile_probs::{TileProbs, TileProbsConversionError};
 
 mod seed;
-pub use seed::Seed;
+pub use seed::{Seed, SeedConversionError, UserString, UserStringError};
 
 mod tile_chooser;
 /// Internal
-use tile_chooser::{DifficultyMap, DifficultyMapExt, TileChooser};
+use tile_chooser::TileChooser;
 
 mod fake_tile;
 /// Internal
@@ -47,6 +49,9 @@ pub use amount::Amount;
 
 mod direction;
 pub use direction::Direction;
+
+mod greed_builder;
+pub use greed_builder::GreedBuilder;
 
 #[cfg(test)]
 mod test;

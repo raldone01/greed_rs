@@ -15,6 +15,7 @@ use crate::greed::{Greed, Playable};
 #[cfg(feature = "termion")]
 use crate::termion::run;
 
+#[allow(unreachable_code, unused_variables)]
 fn main() {
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 

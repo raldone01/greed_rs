@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
+use thiserror::Error;
 
 use super::Pos;
 
@@ -51,5 +52,31 @@ impl From<Size2D> for (usize, usize) {
 impl From<(usize, usize)> for Size2D {
   fn from((x_size, y_size): (usize, usize)) -> Self {
     Size2D::new(x_size, y_size)
+  }
+}
+
+#[derive(Error, Debug, PartialEq)]
+pub enum Size2DConversionError {
+  #[error("Empty Dimensions Field")]
+  Empty,
+  #[error("Invalid Dimensions Format")] // Maybe split into multiple Errors
+  InvalidFormat,
+}
+
+impl TryFrom<&str> for Size2D {
+  type Error = Size2DConversionError;
+
+  fn try_from(value: &str) -> Result<Self, Self::Error> {
+    let mut splits = value.split('x');
+    let x_size = splits.next().unwrap(); // The first split can never be None
+    let y_size = splits.next().ok_or(Size2DConversionError::InvalidFormat)?;
+    if splits.next().is_some() {
+      return Err(Size2DConversionError::InvalidFormat);
+    }
+    let x_size =
+      usize::from_str_radix(x_size, 16).map_err(|_| Size2DConversionError::InvalidFormat)?;
+    let y_size =
+      usize::from_str_radix(y_size, 16).map_err(|_| Size2DConversionError::InvalidFormat)?;
+    Ok(Self { x_size, y_size })
   }
 }

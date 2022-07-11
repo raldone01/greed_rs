@@ -284,7 +284,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     }
     Ok(())
   }
-  fn into_string(&self) -> String {
+  fn as_string(&self) -> String {
     // Don't forget about the new line characters
     let mut out = String::with_capacity(self.tile_count() + self.dimensions().y_size);
     for row in self.rows() {

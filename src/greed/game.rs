@@ -1,34 +1,26 @@
 use super::{
-  Amount, DifficultyMap, DifficultyMapExt, Direction, GameField, GameFieldParserError, GameState,
-  GreedParserError, MoveValidationError, Playable, PlayableError, Pos, ReproductionError, Size2D,
-  Tile, TileChooser, TileGet, TileGrid,
+  Amount, Direction, GameField, GameState, GreedParserError, MoveValidationError, Playable,
+  PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
-use chrono::{DateTime, Local, TimeZone, Utc};
-use rand::distributions::Uniform;
-use rand::prelude::*;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none};
-use sha2::{Digest, Sha512};
+use serde_with::skip_serializing_none;
 use std::{
   rc::Rc,
   time::{Duration, Instant},
 };
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Clone, Default, Serialize, Deserialize, Debug, PartialEq)]
 pub struct GameMeta {
   pub file_version: Option<u64>,
   pub greed_version: Option<u64>,
-  pub seed: Option<String>,
+  pub seed: Option<Seed>,
   pub name: Option<String>,
   pub utc_started_ms: Option<i64>,
   pub utc_finished_ms: Option<i64>,
   #[serde(default)]
   pub time_spent_ms: i64,
-  #[serde(default)]
-  #[serde_as(as = "Option<Vec<(_, _)>>")]
-  pub difficulty_map: Option<DifficultyMap>,
   pub moves: Option<Vec<(Direction, Amount)>>,
   pub score: Option<usize>,
   /// A score based on time spent, moves (counting undos) and a few more factors.
@@ -59,7 +51,6 @@ impl GameMeta {
         .as_millis()
         .try_into()
         .expect("How the hell did you play that long? (Create an issue)"),
-      difficulty_map: greed.difficulty_map.clone(),
       moves: Some(greed.game_state.moves().to_vec()),
       score: Some(greed.score()),
       human_score: Some(greed.human_score()),
@@ -69,81 +60,10 @@ impl GameMeta {
   }
 }
 
-pub struct GreedBuilder {
-  seed: Option<String>,
-  name: Option<String>,
-  difficulty_map: Option<DifficultyMap>,
-  size: Size2D,
-}
-
-impl GreedBuilder {
-  pub fn new() -> Self {
-    Self {
-      seed: None,
-      name: None,
-      difficulty_map: None,
-      size: GameField::default_classic_game_dimensions(),
-    }
-  }
-
-  pub fn resize(&mut self, size: Size2D) -> Result<&mut Self, GameFieldParserError> {
-    let Size2D { x_size, y_size, .. } = size;
-    if x_size < 1 || y_size < 1 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
-      return Err(GameFieldParserError::InvalidSize);
-    }
-    self.size = size;
-    Ok(self)
-  }
-
-  fn gen_rand_seed_str() -> String {
-    let mut thread_rng = thread_rng();
-    let uniform = Uniform::from('A'..='Z');
-
-    (0..512)
-      .map(|_| thread_rng.sample(uniform))
-      .collect::<String>()
-  }
-
-  pub fn rand_seed(&mut self) -> &mut Self {
-    self.seed = Some(GreedBuilder::gen_rand_seed_str());
-    self
-  }
-
-  pub fn seed(&mut self, seed: &str) -> &mut Self {
-    self.seed = Some(String::from(seed));
-    self
-  }
-
-  pub fn name(&mut self, name: &str) -> &mut Self {
-    self.name = Some(String::from(name));
-    self
-  }
-
-  pub fn difficulty_map(&mut self, difficulty_map: DifficultyMap) {
-    self.difficulty_map = Some(difficulty_map);
-  }
-
-  pub fn build(&self) -> Greed {
-    let seed = self
-      .seed
-      .clone()
-      .unwrap_or_else(GreedBuilder::gen_rand_seed_str);
-
-    let name = self.name.clone().unwrap_or_else(|| seed.clone());
-
-    let difficulty_map = self
-      .difficulty_map
-      .clone()
-      .unwrap_or_else(|| DifficultyMap::default_difficulties().clone());
-
-    Greed::new_from_builder(self.size, seed, name, difficulty_map)
-  }
-}
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Greed {
   /// None if the game is custom game and the seed is unkown.
-  seed: Option<String>,
+  seed: Option<Seed>,
   /// We will just pick a name if we don't get one.
   name: String,
   /// None if the game was loaded from a string with no starting time.
@@ -151,29 +71,21 @@ pub struct Greed {
   finished_instant: Option<DateTime<Utc>>,
   started_session: Instant,
   time_spent: Duration,
-  /// None if the game is custom game.
-  difficulty_map: Option<DifficultyMap>,
   undos: usize,
   game_state: GameState,
 }
 
 impl Greed {
-  fn new_from_builder(
-    size: Size2D,
-    string_seed: String,
-    name: String,
-    difficulty_map: DifficultyMap,
-  ) -> Self {
-    let game_field = Rc::from(GameField::from_seed(&string_seed, size, &difficulty_map));
+  pub(super) fn new_from_builder(name: String, seed: Seed) -> Self {
+    let game_field = Rc::from(GameField::from_seed(&seed));
 
     Greed {
-      seed: Some(string_seed),
+      seed: Some(seed),
       name,
       started_instant: Some(chrono::Utc::now()),
       finished_instant: None,
       started_session: Instant::now(),
       time_spent: Duration::new(0, 0),
-      difficulty_map: Some(difficulty_map),
       undos: 0,
       game_state: GameState::new(game_field),
     }
@@ -183,17 +95,13 @@ impl Greed {
     &self.name
   }
 
-  pub fn seed(&self) -> Option<&str> {
-    self.seed.as_ref().map(String::as_ref)
-  }
-
-  pub fn difficulty_map(&self) -> Option<&DifficultyMap> {
-    self.difficulty_map.as_ref()
+  pub fn seed(&self) -> Option<&Seed> {
+    self.seed.as_ref()
   }
 
   // pub fn load_from_reader() {}
   // pub fn save_to_writer() {}
-
+  #[allow(unused_variables)]
   pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
     // load the meta data if available
     // Finds the last index of } which must indicate the end of the meta data
@@ -239,39 +147,39 @@ impl Greed {
       .inital_game_field
       .ok_or_else(|| GameField::try_from(game_field_str));
 
-    let name = game_meta
-      .name
-      .or_else(|| game_meta.seed.clone())
-      .unwrap_or_else(|| {
-        Local::now()
-          .format("Custom Game from %d/%b/%Y %H:%M:%S")
-          .to_string()
-      });
+    //let name = game_meta
+    //  .name
+    //  .or_else(|| game_meta.seed.clone())
+    //  .unwrap_or_else(|| {
+    //    Local::now()
+    //      .format("Custom Game from %d/%b/%Y %H:%M:%S")
+    //      .to_string()
+    //  });
 
     todo!();
-    Ok(Self {
-      seed: game_meta.seed,
-      name,
-      started_instant: game_meta
-        .utc_started_ms
-        .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
-      finished_instant: game_meta
-        .utc_finished_ms
-        .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
-      started_session: Instant::now(),
-      time_spent: Duration::from_millis(
-        game_meta
-          .time_spent_ms
-          .try_into()
-          .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
-      ),
-      difficulty_map: game_meta.difficulty_map,
-      undos: game_meta.undos.unwrap_or(0),
-      game_state: GameState::new_with_moves(
-        Rc::new(game_field.unwrap()), // TODO: remove unwrap
-        game_meta.moves.unwrap_or_else(|| Vec::new()),
-      ),
-    })
+    //Ok(Self {
+    //  seed: game_meta.seed,
+    //  name,
+    //  started_instant: game_meta
+    //    .utc_started_ms
+    //    .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
+    //  finished_instant: game_meta
+    //    .utc_finished_ms
+    //    .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
+    //  started_session: Instant::now(),
+    //  time_spent: Duration::from_millis(
+    //    game_meta
+    //      .time_spent_ms
+    //      .try_into()
+    //      .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
+    //  ),
+    //  difficulty_map: game_meta.difficulty_map,
+    //  undos: game_meta.undos.unwrap_or(0),
+    //  game_state: GameState::new_with_moves(
+    //    Rc::new(game_field.unwrap()), // TODO: remove unwrap
+    //    game_meta.moves.unwrap_or_else(|| Vec::new()),
+    //  ),
+    //})
   }
 
   pub fn save_to_string(&self) -> String {
