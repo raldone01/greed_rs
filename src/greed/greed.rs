@@ -121,10 +121,6 @@ impl Greed {
       default_meta
     };
 
-    if game_meta.inital_game_field.is_none() && game_meta.moves.is_some() {
-      Err(GreedParserError::MovesButNoInitialGameField)?
-    }
-
     // assemble the game_field
     let game_field = Rc::from(
       game_meta
@@ -135,23 +131,18 @@ impl Greed {
     );
 
     let moves = game_meta.moves.unwrap_or_else(|| Vec::new());
-    let game_state = game_meta
-      .last_game_field
-      .map(|last_game_field|
-        // Reconstruct game_state from game_field and last_game_field also assume that the moves are correct
-        GameState::try_rebuild_from_game_field_diff(game_field, &last_game_field, moves))
-      .transpose()?;
-    let game_state = match game_state {
-      Some(game_state) => game_state,
-      None => {
-        // reconstruct the game_state by applying all moves to the inital_game_state
-        let game_state = GameState::new(game_field);
-        for move_ in moves {
-          game_state.move_(move_.0)?;
-        }
-        game_state
-      },
+
+    let game_state = if let Some(last_game_field) = game_meta.last_game_field {
+      GameState::try_rebuild_from_game_field_diff(game_field, &last_game_field, moves)?
+    } else {
+      // reconstruct the game_state by applying all moves to the inital_game_state
+      let mut game_state = GameState::new(game_field);
+      for move_ in moves {
+        game_state.move_(move_.0)?;
+      }
+      game_state
     };
+
     // if moves and inital_game_field -> gen last_game_field ff
 
     // if conflicting last_game_field and initial_game_field?
