@@ -1,4 +1,4 @@
-use super::Pos;
+use super::{GameStateRebuildFromDiffError, Pos};
 use std::num::TryFromIntError;
 use thiserror::Error;
 
@@ -38,14 +38,36 @@ pub struct TileParseError {
 
 #[derive(Error, Debug, PartialEq)]
 pub enum GreedParserError {
-  #[error("Leading empty line")]
-  LeadingEmptyLine,
+  #[error("Empty string")]
+  EmptyString,
+  #[error("Could not determine the initial game field. Provide at least one of: seed, initial_game_field or last_game_field")]
+  MissingGameFieldInformation,
+  #[error("GameMeta contains moves but no initial game_field")]
+  MovesButNoInitialGameField,
   #[error("Invalid meta data format")]
   InvalidMetaDataFromat { cause: json5::Error },
   #[error("Invalid duration")]
   InvalidDuration { cause: TryFromIntError },
   #[error("Failed to parse game field")]
   GameFieldParserError { cause: GameFieldParserError },
+  #[error("Failed to rebuild game state from initial_game_field and last_game_field")]
+  GameStateRebuildFromDiffError {
+    cause: GameStateRebuildFromDiffError,
+  },
+  #[error("Failed to rebuild game state from initial_game_field and moves array")]
+  GameStateRebuildFromMovesError { cause: PlayableError },
+}
+
+impl From<GameStateRebuildFromDiffError> for GreedParserError {
+  fn from(cause: GameStateRebuildFromDiffError) -> Self {
+    GreedParserError::GameStateRebuildFromDiffError { cause }
+  }
+}
+
+impl From<PlayableError> for GreedParserError {
+  fn from(cause: PlayableError) -> Self {
+    GreedParserError::GameStateRebuildFromMovesError { cause }
+  }
 }
 
 #[derive(Error, Debug, PartialEq)]

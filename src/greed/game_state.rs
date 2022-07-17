@@ -1,12 +1,33 @@
 use super::{
-  Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile, TileGet,
-  TileGrid,
+  game_field, Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile,
+  TileGet, TileGrid,
 };
 use bitvec::prelude as bv;
 use std::{
   fmt::{Debug, Display},
   rc::Rc,
 };
+use thiserror::Error;
+
+#[derive(Error, Debug, PartialEq)]
+pub enum GameStateRebuildFromDiffError {
+  #[error(
+    "Tiles don't match at {} - inital tile: {}; last tile {}",
+    pos,
+    initial_tile,
+    last_tile
+  )]
+  InconsistentTiles {
+    pos: Pos,
+    initial_tile: Tile,
+    last_tile: Tile,
+  },
+  #[error("Dimensions not equal: inital size {initial_size} and last size {last_size}")]
+  DimensionsNotEqual {
+    initial_size: Size2D,
+    last_size: Size2D,
+  },
+}
 
 /// This mutable structure represents a modified game field.
 /// It encodes which fields have been consumed and the player pos.
@@ -24,10 +45,20 @@ impl GameState {
   pub(super) fn new_with_moves(game_field: Rc<GameField>, moves: Vec<(Direction, Amount)>) -> Self {
     let player_pos = game_field.player_pos();
     let player_index = game_field.pos_to_index(player_pos).unwrap();
-    let mut mask = bv::BitVec::with_capacity(game_field.tile_count());
-    mask.resize(game_field.tile_count(), true);
+    let tile_count = game_field.tile_count();
+
+    let mut mask = bv::BitVec::with_capacity(tile_count);
+    mask.resize(tile_count, true);
     // https://docs.rs/bitvec/latest/bitvec/vec/struct.BitVec.html#writing-into-a-bit-vector
     mask.set(player_index, false);
+
+    // apply already empty tiles from game_field to mask - sometimes avoids 2 deep lookups
+    for it in 0..tile_count {
+      let last_tile = game_field.vec[it];
+      if last_tile == FakeTile::EMTPY {
+        mask.set(it, false);
+      }
+    }
 
     Self {
       mask,
@@ -41,11 +72,55 @@ impl GameState {
     Self::new_with_moves(game_field, Vec::new())
   }
 
+  pub(super) fn try_rebuild_from_game_field_diff(
+    inital_game_field: Rc<GameField>,
+    last_game_field: &GameField,
+    moves: Vec<(Direction, Amount)>,
+  ) -> Result<Self, GameStateRebuildFromDiffError> {
+    let initial_size = inital_game_field.dimensions();
+    let last_size = last_game_field.dimensions();
+    if initial_size != last_size {
+      Err(GameStateRebuildFromDiffError::DimensionsNotEqual {
+        initial_size,
+        last_size,
+      })?
+    }
+
+    let player_pos = last_game_field.player_pos();
+    let player_index = last_game_field.pos_to_index_unchecked(player_pos);
+
+    let tile_count = initial_size.tile_count();
+    let mut mask = bv::BitVec::with_capacity(tile_count);
+    mask.resize(tile_count, true);
+    mask.set(player_index, false);
+
+    for it in 0..tile_count {
+      let initial_tile = inital_game_field.vec[it];
+      let last_tile = last_game_field.vec[it];
+      if last_tile == FakeTile::EMTPY {
+        mask.set(it, false);
+      } else if initial_tile != last_tile {
+        Err(GameStateRebuildFromDiffError::InconsistentTiles {
+          pos: last_game_field.index_to_pos_unchecked(it),
+          initial_tile: Tile::from(initial_tile),
+          last_tile: Tile::from(last_tile),
+        })?
+      }
+    }
+
+    Ok(Self {
+      mask,
+      player_pos: player_pos,
+      moves,
+      game_field: inital_game_field,
+    })
+  }
+
   pub fn moves(&self) -> &[(Direction, Amount)] {
     &self.moves
   }
 
-  fn get_fake_unchecked(&self, index: usize) -> FakeTile {
+  pub(super) fn get_fake_unchecked(&self, index: usize) -> FakeTile {
     #[allow(clippy::bool_comparison)]
     // self.mask[index] == false is purposefully used over !self.mask[index] i
     if self.mask[index] == false {
@@ -64,6 +139,13 @@ impl GameState {
       pos += dir;
     }
   }
+
+  /// Creates a new game_field from the current game_state.
+  /// Warning: Discards tile information of the cleared tiles.
+  pub fn to_game_field(&self) -> GameField {
+    // GameField::try_from(String::from(self).as_str()).unwrap()
+    GameField::new_from_game_state(self)
+  }
 }
 
 impl TileGrid for GameState {
@@ -73,6 +155,10 @@ impl TileGrid for GameState {
 
   fn player_pos(&self) -> Pos {
     self.player_pos
+  }
+
+  fn tile_count(&self) -> usize {
+    self.mask.len()
   }
 }
 
@@ -246,6 +332,6 @@ impl Debug for GameState {
 
 impl From<&GameState> for String {
   fn from(game_field: &GameState) -> Self {
-    game_field.as_string()
+    game_field.to_string()
   }
 }

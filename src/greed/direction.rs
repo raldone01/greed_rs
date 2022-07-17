@@ -1,3 +1,4 @@
+use super::{PlayableError, Pos};
 use bitflags::bitflags;
 use lazy_static::lazy_static;
 use serde::{
@@ -8,7 +9,6 @@ use std::{
   fmt,
   ops::{Mul, Neg},
 };
-use super::{PlayableError, Pos};
 
 bitflags! {
   pub struct Direction: u8 {
@@ -142,7 +142,7 @@ impl<'de> Visitor<'de> for DirectionVisitor {
 }
 
 impl<'de> Deserialize<'de> for Direction {
-  fn deserialize<D>(deserializer: D) -> Result<Direction, D::Error>
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
     D: Deserializer<'de>,
   {

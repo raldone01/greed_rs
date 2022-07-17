@@ -22,7 +22,7 @@ mod game_field;
 pub use game_field::GameField;
 
 mod game_state;
-pub use game_state::GameState;
+pub use game_state::{GameState, GameStateRebuildFromDiffError};
 
 mod playable;
 pub use playable::Playable;

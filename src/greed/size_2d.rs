@@ -1,3 +1,4 @@
+use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::num::TryFromIntError;
 use thiserror::Error;
@@ -85,5 +86,11 @@ impl TryFrom<&str> for Size2D {
     let y_size =
       usize::from_str_radix(y_size, 16).map_err(|_| Size2DConversionError::InvalidFormat)?;
     Ok(Self { x_size, y_size })
+  }
+}
+
+impl fmt::Display for Size2D {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "({},{})", self.x_size, self.y_size)
   }
 }

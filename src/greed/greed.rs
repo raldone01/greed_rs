@@ -2,7 +2,7 @@ use super::{
   Amount, Direction, GameField, GameState, GreedParserError, MoveValidationError, Playable,
   PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{
@@ -29,6 +29,7 @@ pub struct GameMeta {
   pub human_score: Option<usize>,
   pub undos: Option<usize>,
   pub inital_game_field: Option<GameField>,
+  pub last_game_field: Option<GameField>,
 }
 
 impl GameMeta {
@@ -56,6 +57,7 @@ impl GameMeta {
       human_score: Some(greed.human_score()),
       undos: Some(greed.undos),
       inital_game_field: Some(greed.game_field().clone()),
+      last_game_field: Some(greed.game_state.to_game_field()),
     }
   }
 }
@@ -101,60 +103,69 @@ impl Greed {
 
   // pub fn load_from_reader() {}
   // pub fn save_to_writer() {}
+
+  /// Accepts either GameMeta as Json5 or one GameField-String and creates a Greed instance from it.
   #[allow(unused_variables)]
   pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
     // load the meta data if available
-    // Finds the last index of } which must indicate the end of the meta data
-    let meta_end_pos = str
-      .char_indices()
-      .rev()
-      .find(|&(_, char)| char == '}')
-      // +1 to include } and +1 to include \n
-      .map_or(0, |(index, _)| index + 2);
-    let game_meta = if meta_end_pos != 0 {
-      json5::from_str::<GameMeta>(
-        str
-          .get(0..meta_end_pos)
-          .ok_or(GreedParserError::LeadingEmptyLine)?,
-      )
-      .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
+    let first_char = str.chars().nth(0).ok_or(GreedParserError::EmptyString)?;
+    let game_meta = if first_char == '{' {
+      json5::from_str::<GameMeta>(str)
+        .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
     } else {
-      GameMeta::default()
-    };
-
-    // load last_game_field if available
-    let game_field_str = &str[meta_end_pos..];
-    let last_game_field = if !game_field_str.is_empty() {
-      Some(
-        GameField::try_from(game_field_str)
+      let mut default_meta = GameMeta::default();
+      default_meta.inital_game_field = Some(
+        GameField::try_from(str)
           .map_err(|cause| GreedParserError::GameFieldParserError { cause })?,
-      )
-    } else {
-      None
+      );
+      default_meta
     };
 
-    // load inital_game_field
-    let inital_game_field = game_meta.inital_game_field.clone().unwrap();
-    // TODO: .or_else(|| game_meta.seed.map(|seed| GameField::from_seed(seed)));
+    if game_meta.inital_game_field.is_none() && game_meta.moves.is_some() {
+      Err(GreedParserError::MovesButNoInitialGameField)?
+    }
 
+    // assemble the game_field
+    let game_field = Rc::from(
+      game_meta
+        .inital_game_field
+        .or_else(|| game_meta.last_game_field.clone())
+        .or_else(|| game_meta.seed.as_ref().map(GameField::from_seed))
+        .ok_or(GreedParserError::MissingGameFieldInformation)?,
+    );
+
+    let moves = game_meta.moves.unwrap_or_else(|| Vec::new());
+    let game_state = game_meta
+      .last_game_field
+      .map(|last_game_field|
+        // Reconstruct game_state from game_field and last_game_field also assume that the moves are correct
+        GameState::try_rebuild_from_game_field_diff(game_field, &last_game_field, moves))
+      .transpose()?;
+    let game_state = match game_state {
+      Some(game_state) => game_state,
+      None => {
+        // reconstruct the game_state by applying all moves to the inital_game_state
+        let game_state = GameState::new(game_field);
+        for move_ in moves {
+          game_state.move_(move_.0)?;
+        }
+        game_state
+      },
+    };
     // if moves and inital_game_field -> gen last_game_field ff
-    // if moves and seed -> gen last_game_field ff
 
     // if conflicting last_game_field and initial_game_field?
     // if last_game_field and inital_game_field then compute mask?
 
-    let game_field = game_meta
-      .inital_game_field
-      .ok_or_else(|| GameField::try_from(game_field_str));
-
-    //let name = game_meta
-    //  .name
-    //  .or_else(|| game_meta.seed.clone())
-    //  .unwrap_or_else(|| {
-    //    Local::now()
-    //      .format("Custom Game from %d/%b/%Y %H:%M:%S")
-    //      .to_string()
-    //  });
+    // get the game name
+    let name = game_meta
+      .name
+      .or_else(|| game_meta.seed.as_ref().map(String::from))
+      .unwrap_or_else(|| {
+        Local::now()
+          .format("Custom Game from %d/%b/%Y %H:%M:%S")
+          .to_string()
+      });
 
     todo!();
     //Ok(Self {
@@ -305,12 +316,5 @@ impl TileGrid for Greed {
 
   fn score(&self) -> usize {
     self.game_state.score()
-  }
-}
-
-impl From<Greed> for String {
-  fn from(greed: Greed) -> Self {
-    let _out = String::with_capacity(1024 + greed.game_field().tile_count());
-    todo!("Save game meta then write game field")
   }
 }

@@ -1,5 +1,6 @@
 use super::{GameField, Greed, Seed, Size2D, TileProbs};
 
+#[derive(Clone, PartialEq, Eq)]
 pub struct GreedBuilder {
   name: Option<String>,
 }
@@ -45,6 +46,8 @@ impl GreedBuilder {
     .build()
   }
 }
+
+#[derive(Clone, PartialEq, Eq)]
 pub struct SeedGreedBuilder {
   name: Option<String>,
   seed: Seed,
@@ -62,6 +65,7 @@ impl SeedGreedBuilder {
   }
 }
 
+#[derive(Clone, PartialEq, Eq)]
 pub struct SizeProbGreedBuilder {
   name: Option<String>,
   size: Option<Size2D>,

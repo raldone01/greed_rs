@@ -1,17 +1,21 @@
 use rand::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{
+  de::{self},
+  Deserialize, Deserializer, Serialize,
+};
 use sha2::{Digest, Sha512};
 use std::fmt::{Debug, Display};
 
 use super::{
-  FakeTile, FakeTileConversionError, GameFieldParserError, Pos, Seed, Size2D, Tile, TileChooser,
-  TileGet, TileGrid,
+  FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Pos, Seed, Size2D, Tile,
+  TileChooser, TileGet, TileGrid,
 };
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize)]
 pub struct GameField {
+  /// The fake tile the player is on MUST be an EMPTY tile.
   pub(super) vec: Box<[FakeTile]>,
   size: Size2D,
   /// initial player_pos
@@ -26,11 +30,28 @@ impl TileGrid for GameField {
   fn player_pos(&self) -> Pos {
     self.player_pos
   }
+
+  fn tile_count(&self) -> usize {
+    self.vec.len()
+  }
 }
 
 impl GameField {
   pub fn default_classic_game_dimensions() -> Size2D {
     Size2D::new_unchecked(79, 21)
+  }
+
+  /// Not exposed because it is counter intuitive
+  pub(super) fn new_from_game_state(game_state: &GameState) -> Self {
+    let vec = (0..game_state.tile_count())
+      .map(|index| game_state.get_fake_unchecked(index))
+      .collect();
+
+    Self {
+      vec,
+      size: game_state.dimensions(),
+      player_pos: game_state.player_pos(),
+    }
   }
 
   fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
@@ -62,9 +83,15 @@ impl GameField {
   }
 }
 
+impl From<&Seed> for GameField {
+  fn from(seed: &Seed) -> Self {
+    GameField::from_seed(&seed)
+  }
+}
+
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
-    game_field.as_string()
+    game_field.to_string()
   }
 }
 
@@ -198,5 +225,43 @@ impl TileGet<Pos> for GameField {
 impl Display for GameField {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     self.display_fmt(f)
+  }
+}
+
+impl<'de> Deserialize<'de> for GameField {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: Deserializer<'de>,
+  {
+    #[derive(Deserialize)]
+    struct InnerGameField {
+      vec: Box<[FakeTile]>,
+      size: Size2D,
+      player_pos: Pos,
+    }
+    let inner_game_field = InnerGameField::deserialize(deserializer)?;
+    let game_field = Self {
+      vec: inner_game_field.vec,
+      size: inner_game_field.size,
+      player_pos: inner_game_field.player_pos,
+    };
+    // validate that the player pos is valid
+    if !game_field.is_valid_pos(game_field.player_pos) {
+      let Size2D { x_size, y_size } = game_field.size;
+      Err(de::Error::custom(format!(
+        "Player pos {} is not valid. Expected (x: 0..{x_size}, y: 0..{y_size})",
+        game_field.player_pos
+      )))?
+    }
+    // validate that players underlying tile is an EMPTY tile
+    let tile = game_field.vec[game_field.pos_to_index_unchecked(game_field.player_pos)];
+    if tile != FakeTile::EMTPY {
+      Err(de::Error::custom(format!(
+        "Tile at player pos {} not empty tile instead it is {}",
+        game_field.player_pos,
+        Tile::from(tile),
+      )))?
+    }
+    Ok(game_field)
   }
 }

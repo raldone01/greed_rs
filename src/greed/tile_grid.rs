@@ -284,7 +284,11 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> {
     }
     Ok(())
   }
-  fn as_string(&self) -> String {
+
+  /// All types that implement TileGrid should also implement Display
+  /// so you can alternatively call to_string which will usually end up calling this function.
+  /// This name is a bit weird to avoid colliding with the ToString trait.
+  fn to_string_tile_grid(&self) -> String {
     // Don't forget about the new line characters
     let mut out = String::with_capacity(self.tile_count() + self.dimensions().y_size);
     for row in self.rows() {
