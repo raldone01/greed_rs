@@ -27,7 +27,8 @@ fuzz_target!(|data: &[u8]| {
       let tile_probs_seed = split_seed.next().map(|val| val.to_lowercase());
       assert_eq!(tile_probs_data, tile_probs_seed);
 
-      // TODO check this (hex code of the size needs to be matched caseless)
+      assert!(split_data.next().is_none());
+      assert!(split_seed.next().is_none());
     }
   }
 });

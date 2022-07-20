@@ -205,6 +205,10 @@ impl TryFrom<&str> for Seed {
       .map(TileProbs::try_from)
       .transpose()?
       .unwrap_or(DEFAULT_TILE_PROBABILITIES);
+
+    if parts.next().is_some() {
+      return Err(SeedConversionError::UnexpectedHashTag);
+    }
     Ok(Self {
       tile_probabilities,
       size,
