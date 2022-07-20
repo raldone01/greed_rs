@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Write};
 use thiserror::Error;
 
-/// TODO: Maybe rename to user str error?
 #[derive(Error, Debug, PartialEq)]
 pub enum UserStringError {
   #[error("Unexpected char {char} these are valid: 'A-Za-z0-9_'")]
@@ -54,7 +53,7 @@ pub struct UserString(String);
 
 impl UserString {
   fn is_valid_char(ch: char) -> bool {
-    ch.is_alphanumeric() || ch == '_' // TODO maybe allow more chars
+    ch.is_alphanumeric() || ch == '_'
   }
   fn validate_user_string(user_str: &str) -> Result<(), UserStringError> {
     if user_str.is_empty() {

@@ -77,7 +77,6 @@ impl GameField {
     let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
     // init the random gen with the first 16 bytes of the hash
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
-    #[allow(clippy::or_fun_call)] // TODO: Create an issue
     let mut tile_chooser = TileChooser::new(&mut rng, seed.tile_probabilities());
     GameField::new_random(&mut tile_chooser, seed.size())
   }
@@ -85,7 +84,7 @@ impl GameField {
 
 impl From<&Seed> for GameField {
   fn from(seed: &Seed) -> Self {
-    GameField::from_seed(&seed)
+    GameField::from_seed(seed)
   }
 }
 

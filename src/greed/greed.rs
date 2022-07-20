@@ -2,7 +2,7 @@ use super::{
   Amount, Direction, GameField, GameState, GreedParserError, MoveValidationError, Playable,
   PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 use std::{
@@ -28,7 +28,7 @@ pub struct GameMeta {
   /// TODO: Maybe also store average_move_time.
   pub human_score: Option<usize>,
   pub undos: Option<usize>,
-  pub inital_game_field: Option<GameField>,
+  pub initial_game_field: Option<GameField>,
   pub last_game_field: Option<GameField>,
 }
 
@@ -56,7 +56,7 @@ impl GameMeta {
       score: Some(greed.score()),
       human_score: Some(greed.human_score()),
       undos: Some(greed.undos),
-      inital_game_field: Some(greed.game_field().clone()),
+      initial_game_field: Some(greed.game_field().clone()),
       last_game_field: Some(greed.game_state.to_game_field()),
     }
   }
@@ -105,32 +105,35 @@ impl Greed {
   // pub fn save_to_writer() {}
 
   /// Accepts either GameMeta as Json5 or one GameField-String and creates a Greed instance from it.
-  #[allow(unused_variables)]
   pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
     // load the meta data if available
+
+    #[allow(clippy::iter_nth_zero)]
     let first_char = str.chars().nth(0).ok_or(GreedParserError::EmptyString)?;
     let game_meta = if first_char == '{' {
       json5::from_str::<GameMeta>(str)
         .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
     } else {
-      let mut default_meta = GameMeta::default();
-      default_meta.inital_game_field = Some(
-        GameField::try_from(str)
-          .map_err(|cause| GreedParserError::GameFieldParserError { cause })?,
-      );
-      default_meta
+      // Create default game_meta and set initial_field
+      GameMeta {
+        initial_game_field: Some(
+          GameField::try_from(str)
+            .map_err(|cause| GreedParserError::GameFieldParserError { cause })?,
+        ),
+        ..Default::default()
+      }
     };
 
     // assemble the game_field
     let game_field = Rc::from(
       game_meta
-        .inital_game_field
+        .initial_game_field
         .or_else(|| game_meta.last_game_field.clone())
         .or_else(|| game_meta.seed.as_ref().map(GameField::from_seed))
         .ok_or(GreedParserError::MissingGameFieldInformation)?,
     );
 
-    let moves = game_meta.moves.unwrap_or_else(|| Vec::new());
+    let moves = game_meta.moves.unwrap_or_default();
 
     let game_state = if let Some(last_game_field) = game_meta.last_game_field {
       GameState::try_rebuild_from_game_field_diff(game_field, &last_game_field, moves)?
@@ -143,11 +146,6 @@ impl Greed {
       game_state
     };
 
-    // if moves and inital_game_field -> gen last_game_field ff
-
-    // if conflicting last_game_field and initial_game_field?
-    // if last_game_field and inital_game_field then compute mask?
-
     // get the game name
     let name = game_meta
       .name
@@ -158,38 +156,30 @@ impl Greed {
           .to_string()
       });
 
-    todo!();
-    //Ok(Self {
-    //  seed: game_meta.seed,
-    //  name,
-    //  started_instant: game_meta
-    //    .utc_started_ms
-    //    .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
-    //  finished_instant: game_meta
-    //    .utc_finished_ms
-    //    .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
-    //  started_session: Instant::now(),
-    //  time_spent: Duration::from_millis(
-    //    game_meta
-    //      .time_spent_ms
-    //      .try_into()
-    //      .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
-    //  ),
-    //  difficulty_map: game_meta.difficulty_map,
-    //  undos: game_meta.undos.unwrap_or(0),
-    //  game_state: GameState::new_with_moves(
-    //    Rc::new(game_field.unwrap()), // TODO: remove unwrap
-    //    game_meta.moves.unwrap_or_else(|| Vec::new()),
-    //  ),
-    //})
+    Ok(Self {
+      seed: game_meta.seed,
+      name,
+      started_instant: game_meta
+        .utc_started_ms
+        .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
+      finished_instant: game_meta
+        .utc_finished_ms
+        .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
+      started_session: Instant::now(),
+      time_spent: Duration::from_millis(
+        game_meta
+          .time_spent_ms
+          .try_into()
+          .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
+      ),
+      undos: game_meta.undos.unwrap_or(0),
+      game_state,
+    })
   }
 
   pub fn save_to_string(&self) -> String {
     let meta = GameMeta::new(self);
-    let mut str = json5::to_string(&meta).unwrap();
-    str.push('\n');
-    str += &String::from(self.game_state());
-    str
+    json5::to_string(&meta).unwrap()
   }
 
   pub fn game_meta(&self) -> GameMeta {

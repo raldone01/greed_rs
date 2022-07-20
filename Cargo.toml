@@ -2,6 +2,13 @@
 name = "greed_rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["raldone01 <raldone01@gmail.com>", "onestacked <chrisi.schrefl@gmail.com>"]
+description = "A rewrite of the very popular greed cli game. (Originally written by Matt Day)"
+repository = "https://github.com/raldone01/greed_rs"
+license = "GPL-3.0 license"
+keywords = ["game", "puzzle-game", "roleplay", "greed", "game-engine-2d"]
+categories = ["game-engines", "games", "wasm"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,7 +16,7 @@ edition = "2021"
 crossterm = "0.24.0"
 # termion = "1.5.6"
 tui = "0.18.0"
-clap = "3.1.6"
+clap = { version = "3.1.6", features = ["derive"] }
 rand = "0.8.5"
 lazy_static = "1.4.0"
 thiserror = "1.0.31"
@@ -21,4 +28,4 @@ rand_pcg = "0.3.1"
 chrono = { version = "0.4.19", oldtime = false }
 serde = { version = "1.0.137", features = ["derive"] }
 json5 = "0.4.1"
-serde_with = "1.14.0"
+serde_with = "2.0.0"

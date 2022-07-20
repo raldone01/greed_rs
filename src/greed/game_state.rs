@@ -1,6 +1,6 @@
 use super::{
-  game_field, Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile,
-  TileGet, TileGrid,
+  Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile, TileGet,
+  TileGrid,
 };
 use bitvec::prelude as bv;
 use std::{
@@ -110,7 +110,7 @@ impl GameState {
 
     Ok(Self {
       mask,
-      player_pos: player_pos,
+      player_pos,
       moves,
       game_field: inital_game_field,
     })
@@ -214,8 +214,6 @@ impl Playable for GameState {
       return Err(PlayableError::BadMove);
     }
     let move_amount = starting_tile.amount();
-
-    // TODO: try_collect
 
     let mut moves = Vec::with_capacity(move_amount.into());
     // push the tile that gave us the amount
