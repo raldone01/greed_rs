@@ -14,6 +14,11 @@ pub struct Size2D {
   pub y_size: usize,
 }
 
+pub const DEFAULT_SIZE: Size2D = Size2D {
+  x_size: 79,
+  y_size: 21,
+};
+
 impl Size2D {
   pub(super) fn new_unchecked(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }

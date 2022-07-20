@@ -11,12 +11,14 @@ mod ui;
 
 #[cfg(feature = "crossterm")]
 use crate::crossterm::run;
-use crate::greed::{Greed, Playable};
+use crate::greed::{Greed, Playable, Seed};
 #[cfg(feature = "termion")]
 use crate::termion::run;
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
+  let seeed = Seed::try_from("#cx077777").unwrap();
+
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 
   println!("Initial field:\n{}", greed.game_state());

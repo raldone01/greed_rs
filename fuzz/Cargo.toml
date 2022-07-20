@@ -1,0 +1,31 @@
+[package]
+name = "greed_rs-fuzz"
+version = "0.0.0"
+authors = ["Automatically generated"]
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.greed_rs]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "greed_parser"
+path = "fuzz_targets/greed_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "user_string"
+path = "fuzz_targets/user_string.rs"
+test = false
+doc = false

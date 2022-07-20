@@ -16,7 +16,7 @@ mod pos;
 pub use pos::Pos;
 
 mod size_2d;
-pub use size_2d::{Size2D, Size2DConversionError};
+pub use size_2d::{Size2D, Size2DConversionError, DEFAULT_SIZE};
 
 mod game_field;
 pub use game_field::GameField;

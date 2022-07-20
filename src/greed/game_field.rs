@@ -6,6 +6,8 @@ use serde::{
 use sha2::{Digest, Sha512};
 use std::fmt::{Debug, Display};
 
+use crate::greed::DEFAULT_SIZE;
+
 use super::{
   FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Pos, Seed, Size2D, Tile,
   TileChooser, TileGet, TileGrid,
@@ -37,10 +39,6 @@ impl TileGrid for GameField {
 }
 
 impl GameField {
-  pub fn default_classic_game_dimensions() -> Size2D {
-    Size2D::new_unchecked(79, 21)
-  }
-
   /// Not exposed because it is counter intuitive
   pub(super) fn new_from_game_state(game_state: &GameState) -> Self {
     let vec = (0..game_state.tile_count())
@@ -98,7 +96,7 @@ impl TryFrom<&str> for GameField {
   type Error = GameFieldParserError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    let default_size = GameField::default_classic_game_dimensions();
+    let default_size = DEFAULT_SIZE;
     let mut vec = Vec::with_capacity(default_size.tile_count());
 
     let mut x_size = None;

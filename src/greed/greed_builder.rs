@@ -1,4 +1,4 @@
-use super::{GameField, Greed, Seed, Size2D, TileProbs};
+use super::{Greed, Seed, Size2D, TileProbs, DEFAULT_SIZE};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct GreedBuilder {
@@ -73,9 +73,7 @@ pub struct SizeProbGreedBuilder {
 }
 impl SizeProbGreedBuilder {
   pub fn build(self) -> Greed {
-    let size = self
-      .size
-      .unwrap_or_else(GameField::default_classic_game_dimensions);
+    let size = self.size.unwrap_or(DEFAULT_SIZE);
 
     let seed = Seed::new_random(size, self.tile_probs);
     SeedGreedBuilder {
