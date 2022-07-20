@@ -35,6 +35,8 @@ pub enum TileProbsConversionError {
   Empty,
   #[error("Invalid Tile Probabilities Format")]
   InvalidFormat,
+  #[error("Invalid Char in Tile Probabilities Format: {c}")]
+  InvalidChar { c: char },
   #[error("The wrong amount of chars was given ({count} given, expected 18")]
   InvalidCharCount { count: usize },
 }
@@ -43,6 +45,9 @@ impl TryFrom<&str> for TileProbs {
   type Error = TileProbsConversionError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
+    if let Some(c) = value.chars().find(|c| !c.is_ascii_hexdigit()) {
+      return Err(TileProbsConversionError::InvalidChar { c });
+    }
     if value.len() != 2 * 9 {
       return Err(TileProbsConversionError::InvalidCharCount { count: value.len() });
     }

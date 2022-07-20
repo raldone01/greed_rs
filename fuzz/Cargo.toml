@@ -25,7 +25,7 @@ test = false
 doc = false
 
 [[bin]]
-name = "user_string"
-path = "fuzz_targets/user_string.rs"
+name = "seed"
+path = "fuzz_targets/seed.rs"
 test = false
 doc = false

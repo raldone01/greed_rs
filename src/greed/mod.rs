@@ -32,7 +32,7 @@ pub use tile_grid::{
   ColIterator, RowIterator, StrideTileIterator, TileGet, TileGrid, TileIterator,
 };
 mod tile_probs;
-pub use tile_probs::{TileProbs, TileProbsConversionError};
+pub use tile_probs::{TileProbs, TileProbsConversionError, DEFAULT_TILE_PROBABILITIES};
 
 mod seed;
 pub use seed::{Seed, SeedConversionError, UserString, UserStringError};

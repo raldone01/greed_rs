@@ -57,7 +57,8 @@ impl TryFrom<Tile> for FakeTile {
 
 impl From<FakeTile> for Tile {
   fn from(fake_tile: FakeTile) -> Self {
-    Tile::try_from(fake_tile.amount).unwrap()
+    Tile::try_from(fake_tile.amount)
+      .expect("fake_tile.ammount is at always <= 9 therefore Tile::try_from can never fail")
   }
 }
 

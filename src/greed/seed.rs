@@ -1,6 +1,6 @@
 use super::{
-  tile_probs::DEFAULT_TILE_PROBABILITIES, Size2D, Size2DConversionError, TileProbs,
-  TileProbsConversionError,
+  Size2D, Size2DConversionError, TileProbs, TileProbsConversionError, DEFAULT_SIZE,
+  DEFAULT_TILE_PROBABILITIES,
 };
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
@@ -116,7 +116,7 @@ impl Display for UserString {
 ///
 /// [] indicates optional
 ///
-/// Format: <user_str>#<x_size>x<y_size>[#112233445566778899]
+/// Format: <user_str>[#<x_size>x<y_size>[#112233445566778899]]
 ///
 /// Representation:
 /// * `user_str: A-Za-z0-9_`
@@ -194,11 +194,13 @@ impl TryFrom<&str> for Seed {
     let mut parts = value.split('#');
     let user_str_slice = parts.next().unwrap(); // The first split can never fail
     let user_str = UserString::try_from(user_str_slice)?;
-    let size_slice = parts
+    let size = parts
       .next()
-      .ok_or(SeedConversionError::UnexpectedEndOfSeed)?;
-    let size = Size2D::try_from(size_slice)?;
+      .map(Size2D::try_from)
+      .transpose()?
+      .unwrap_or(DEFAULT_SIZE);
     let tile_probabilities_slice = parts.next();
+
     let tile_probabilities = tile_probabilities_slice
       .map(TileProbs::try_from)
       .transpose()?

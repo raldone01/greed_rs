@@ -72,7 +72,8 @@ impl GameField {
     let mut hasher = Sha512::new();
     hasher.update(seed.user_str());
     let hash = hasher.finalize();
-    let used_hash = <[u8; 16]>::try_from(&hash[0..16]).unwrap();
+    let used_hash = <[u8; 16]>::try_from(&hash[0..16])
+      .expect("Can never fail since we actually statically know the size");
     // init the random gen with the first 16 bytes of the hash
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
     let mut tile_chooser = TileChooser::new(&mut rng, seed.tile_probabilities());
@@ -160,7 +161,10 @@ impl TryFrom<&str> for GameField {
       return Err(GameFieldParserError::NoTrailingNewLine);
     }
 
-    let size = Size2D::new_unchecked(x_size.unwrap(), y_pos);
+    let size = Size2D::new_unchecked(
+      x_size.expect("since x_size is set on newlines and y_pos != 0"),
+      y_pos,
+    );
     assert!(vec.len() == size.tile_count());
     let vec = vec.into_boxed_slice();
 
