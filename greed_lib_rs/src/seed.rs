@@ -154,6 +154,29 @@ impl Seed {
   pub fn tile_probabilities(&self) -> &TileProbs {
     &self.tile_probabilities
   }
+  fn partial_verify(value: &str) -> Result<(&str, Size2D, TileProbs), SeedConversionError> {
+    if value.is_empty() {
+      return Err(SeedConversionError::EmptyString);
+    }
+    let mut parts = value.split('#');
+    let user_str_slice = parts.next().unwrap(); // The first split can never fail
+    let size = parts
+      .next()
+      .map(Size2D::try_from)
+      .transpose()?
+      .unwrap_or(DEFAULT_SIZE);
+    let tile_probabilities_slice = parts.next();
+
+    let tile_probabilities = tile_probabilities_slice
+      .map(TileProbs::try_from)
+      .transpose()?
+      .unwrap_or(DEFAULT_TILE_PROBABILITIES);
+
+    if parts.next().is_some() {
+      return Err(SeedConversionError::UnexpectedHashTag);
+    }
+    Ok((user_str_slice, size, tile_probabilities))
+  }
 }
 
 impl From<&Seed> for String {
@@ -180,32 +203,27 @@ impl From<Seed> for String {
   }
 }
 
-/// TODO: Change to String and use truncate to get the UserString from the value
 impl TryFrom<&str> for Seed {
   type Error = SeedConversionError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    if value.is_empty() {
-      return Err(SeedConversionError::EmptyString);
-    }
-    let mut parts = value.split('#');
-    let user_str_slice = parts.next().unwrap(); // The first split can never fail
+    let (user_str_slice, size, tile_probabilities) = Self::partial_verify(value)?;
     let user_str = UserString::try_from(user_str_slice.to_string())?;
-    let size = parts
-      .next()
-      .map(Size2D::try_from)
-      .transpose()?
-      .unwrap_or(DEFAULT_SIZE);
-    let tile_probabilities_slice = parts.next();
+    Ok(Self {
+      tile_probabilities,
+      size,
+      user_str,
+    })
+  }
+}
 
-    let tile_probabilities = tile_probabilities_slice
-      .map(TileProbs::try_from)
-      .transpose()?
-      .unwrap_or(DEFAULT_TILE_PROBABILITIES);
+impl TryFrom<String> for Seed {
+  type Error = SeedConversionError;
 
-    if parts.next().is_some() {
-      return Err(SeedConversionError::UnexpectedHashTag);
-    }
+  fn try_from(mut value: String) -> Result<Self, Self::Error> {
+    let (user_str_slice, size, tile_probabilities) = Self::partial_verify(&value)?;
+    value.truncate(user_str_slice.len());
+    let user_str = UserString::try_from(value)?;
     Ok(Self {
       tile_probabilities,
       size,

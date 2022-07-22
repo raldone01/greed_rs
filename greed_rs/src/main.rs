@@ -14,8 +14,6 @@ use greed_lib_rs::{Direction, Greed, Playable, Seed};
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
-  let seeed = Seed::try_from("#cx077777").unwrap();
-
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 
   println!("Initial field:\n{}", greed.game_state());
