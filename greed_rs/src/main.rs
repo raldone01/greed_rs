@@ -7,8 +7,6 @@ mod crossterm;
 #[cfg(feature = "termion")]
 mod termion;
 
-mod ui;
-
 #[cfg(feature = "crossterm")]
 use crate::crossterm::run;
 use crate::greed::{Greed, Playable, Seed};

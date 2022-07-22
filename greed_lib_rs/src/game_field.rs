@@ -6,11 +6,9 @@ use serde::{
 use sha2::{Digest, Sha512};
 use std::fmt::{Debug, Display};
 
-use crate::greed::DEFAULT_SIZE;
-
 use super::{
   FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Pos, Seed, Size2D, Tile,
-  TileChooser, TileGet, TileGrid,
+  TileChooser, TileGet, TileGrid, DEFAULT_SIZE,
 };
 
 /// This immutable structure represents the initial state of a game of greed.
