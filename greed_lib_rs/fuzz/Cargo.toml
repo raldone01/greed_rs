@@ -1,5 +1,5 @@
 [package]
-name = "greed_rs-fuzz"
+name = "greed_lib_rs-fuzz"
 version = "0.0.0"
 authors = ["Automatically generated"]
 publish = false
@@ -10,13 +10,12 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+rand = "0.8.5"
+rand_pcg = "0.3.1"
+sha2 = "0.10.2"
 
-[dependencies.greed_rs]
+[dependencies.greed_lib_rs]
 path = ".."
-
-# Prevent this from interfering with workspaces
-[workspace]
-members = ["."]
 
 [[bin]]
 name = "greed_parser"

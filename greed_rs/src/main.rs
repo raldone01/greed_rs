@@ -1,19 +1,16 @@
 #![allow(dead_code)]
 
-mod greed;
-
 #[cfg(feature = "crossterm")]
 mod crossterm;
 #[cfg(feature = "termion")]
 mod termion;
 
-mod ui;
-
 #[cfg(feature = "crossterm")]
 use crate::crossterm::run;
-use crate::greed::{Greed, Playable, Seed};
 #[cfg(feature = "termion")]
 use crate::termion::run;
+
+use greed_lib_rs::{Direction, Greed, Playable, Seed};
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
@@ -23,11 +20,11 @@ fn main() {
 
   println!("Initial field:\n{}", greed.game_state());
 
-  greed.move_(greed::Direction::LEFT).unwrap();
+  greed.move_(Direction::LEFT).unwrap();
   println!("move_left:\n{}", greed.game_state());
-  greed.move_(greed::Direction::DOWN).unwrap();
+  greed.move_(Direction::DOWN).unwrap();
   println!("move_down:\n{}", greed.game_state());
-  greed.move_(greed::Direction::RIGHT).unwrap();
+  greed.move_(Direction::RIGHT).unwrap();
   println!("move_right:\n{}", greed.game_state());
 
   greed.undo_move().unwrap();
@@ -40,7 +37,7 @@ fn main() {
 
   println!("NAME: {}", greed.name());
 
-  greed.move_(greed::Direction::LEFT).unwrap();
+  greed.move_(Direction::LEFT).unwrap();
   println!("move_left:\n{}", greed.game_state());
 
   let save_file = greed.save_to_string();

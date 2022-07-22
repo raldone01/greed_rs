@@ -87,16 +87,12 @@ impl From<UserString> for String {
     user_str.0
   }
 }
-impl TryFrom<&str> for UserString {
+impl TryFrom<String> for UserString {
   type Error = UserStringError;
 
-  fn try_from(user_str: &str) -> Result<Self, Self::Error> {
-    user_str
-      .chars()
-      .find(|&char| !Self::is_valid_char(char))
-      .map_or(Ok(Self(String::from(user_str))), |char| {
-        Err(UserStringError::InvalidCharacter { char })
-      })
+  fn try_from(user_str: String) -> Result<Self, Self::Error> {
+    Self::validate_user_string(&user_str)?;
+    Ok(Self(user_str))
   }
 }
 impl Display for UserString {
@@ -184,6 +180,7 @@ impl From<Seed> for String {
   }
 }
 
+/// TODO: Change to String and use truncate to get the UserString from the value
 impl TryFrom<&str> for Seed {
   type Error = SeedConversionError;
 
@@ -193,7 +190,7 @@ impl TryFrom<&str> for Seed {
     }
     let mut parts = value.split('#');
     let user_str_slice = parts.next().unwrap(); // The first split can never fail
-    let user_str = UserString::try_from(user_str_slice)?;
+    let user_str = UserString::try_from(user_str_slice.to_string())?;
     let size = parts
       .next()
       .map(Size2D::try_from)

@@ -1,3 +1,5 @@
+pub use super::*;
+
 #[test]
 fn greed_from_str() {
   //assert_eq!(
@@ -11,9 +13,8 @@ fn greed_from_str() {
 }
 
 mod seed_test {
-  use crate::greed::{TileProbs, UserString};
+  pub use super::*;
 
-  use super::super::{Seed, Size2D};
   const TEST_TILE_PROBS: [u8; 9] = [17, 34, 51, 68, 85, 102, 119, 136, 153];
 
   #[test]
@@ -21,7 +22,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9#112233445566778899").unwrap(),
       Seed::new(
-        UserString::try_from("ABCD_abcd_1234").unwrap(),
+        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
         Some(TileProbs::from(TEST_TILE_PROBS))
       )
@@ -32,7 +33,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9").unwrap(),
       Seed::new(
-        UserString::try_from("ABCD_abcd_1234").unwrap(),
+        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
         None
       )
@@ -42,7 +43,7 @@ mod seed_test {
   fn test_serializing_a_seed() {
     assert_eq!(
       &String::from(&Seed::new(
-        UserString::try_from("ABCD_abcd_1234").unwrap(),
+        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
         Some(TileProbs::from(TEST_TILE_PROBS))
       )),
@@ -53,7 +54,7 @@ mod seed_test {
   fn test_serializing_a_seed_no_tile_probs() {
     assert_eq!(
       &String::from(&Seed::new(
-        UserString::try_from("ABCD_abcd_1234").unwrap(),
+        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
         None
       )),
