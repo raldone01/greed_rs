@@ -17,10 +17,6 @@ sha2 = "0.10.2"
 [dependencies.greed_lib_rs]
 path = ".."
 
-# Prevent this from interfering with workspaces
-# [workspace]
-# members = ["."]
-
 [[bin]]
 name = "greed_parser"
 path = "fuzz_targets/greed_parser.rs"

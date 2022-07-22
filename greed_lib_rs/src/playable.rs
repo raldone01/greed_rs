@@ -5,13 +5,6 @@ pub trait Playable {
   /// Returns the indices that would be consumed excluding the old player pos, but including the new player pos.
   /// They are in order from the closest to the farthest.
   /// So `ret.unwrap().len()` would be the amount of tiles consumed.
-  /// # Examples
-  /// ```rust
-  /// use greed::*;
-  ///
-  /// let game = Greed::new(...);
-  /// let move_score = game.check_move(dir).len();
-  /// ```
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, PlayableError>;
   /// Returns the positions that were consumed like `check_move`.
   fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, PlayableError>;

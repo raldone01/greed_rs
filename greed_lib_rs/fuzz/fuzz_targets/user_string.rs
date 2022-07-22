@@ -1,7 +1,7 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
 
-use greed_rs::{Seed, Size2D, DEFAULT_SIZE};
+use greed_lib_rs::{Seed, Size2D, DEFAULT_SIZE};
 use std::convert::TryFrom;
 
 fuzz_target!(|data: &[u8]| {
