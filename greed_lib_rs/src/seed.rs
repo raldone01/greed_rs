@@ -2,9 +2,10 @@ use super::{
   Size2D, Size2DConversionError, TileProbs, TileProbsConversionError, DEFAULT_SIZE,
   DEFAULT_TILE_PROBABILITIES,
 };
+use arbitrary::Arbitrary;
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Write};
+use std::fmt::{Debug, Display, Write};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -97,7 +98,21 @@ impl TryFrom<String> for UserString {
 }
 impl Display for UserString {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    self.0.fmt(f)
+    Display::fmt(&self.0, f)
+  }
+}
+impl<'a> Arbitrary<'a> for UserString {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    let mut user_str = String::with_capacity(30);
+    for _ in 0..30 {
+      let u8 = *u.choose(
+        b"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
+                abcdefghijklmnopqrstuvwxyz\
+                0123456789",
+      )?;
+      user_str.push(u8.into());
+    }
+    Self::try_from(user_str).map_err(|_| arbitrary::Error::IncorrectFormat)
   }
 }
 
@@ -119,7 +134,7 @@ impl Display for UserString {
 /// * `x_size: unsigned`
 /// * `y_size: unsigned`
 /// * \<T>`XX: probability of tile T as two hex digits` where `T is the tile number in 1..=9`
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "&str")]
 #[serde(into = "String")]
 pub struct Seed {
@@ -179,27 +194,39 @@ impl Seed {
   }
 }
 
-impl From<&Seed> for String {
-  fn from(seed: &Seed) -> Self {
+// TODO CHECK FOR OTHER TYPES
+impl Display for Seed {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let Seed {
       size: Size2D { x_size, y_size },
       user_str,
       tile_probabilities,
-    } = seed;
-    let mut str = format!("{user_str}#{x_size:x}x{y_size:x}");
+    } = self;
+    write!(f, "{user_str}#{x_size:x}x{y_size:x}")?;
     if *tile_probabilities != DEFAULT_TILE_PROBABILITIES {
-      str.push('#');
+      f.write_char('#')?;
       for prob in tile_probabilities {
-        write!(str, "{prob:02x}").unwrap();
-        //                        Technically this should never unwrap so ignoring the error or unwrap_unchecked should be fine
+        write!(f, "{prob:02x}")?;
       }
     }
-    str
+    Ok(())
+  }
+}
+impl Debug for Seed {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    // TODO CHECK OTHER
+    write!(f, "{self}")
+  }
+}
+
+impl From<&Seed> for String {
+  fn from(seed: &Seed) -> Self {
+    seed.to_string()
   }
 }
 impl From<Seed> for String {
   fn from(seed: Seed) -> Self {
-    String::from(&seed)
+    seed.to_string()
   }
 }
 
@@ -229,5 +256,11 @@ impl TryFrom<String> for Seed {
       size,
       user_str,
     })
+  }
+}
+
+impl<'a> Arbitrary<'a> for Seed {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    Ok(Self::new(u.arbitrary()?, u.arbitrary()?, u.arbitrary()?))
   }
 }

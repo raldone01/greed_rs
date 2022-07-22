@@ -1,6 +1,7 @@
+use arbitrary::Arbitrary;
 use core::fmt;
 use serde::{Deserialize, Serialize};
-use std::num::TryFromIntError;
+use std::{num::TryFromIntError, ops::RangeInclusive};
 use thiserror::Error;
 
 use super::Pos;
@@ -98,5 +99,14 @@ impl TryFrom<&str> for Size2D {
 impl fmt::Display for Size2D {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "({},{})", self.x_size, self.y_size)
+  }
+}
+
+impl<'a> Arbitrary<'a> for Size2D {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    // Limit the size to "reasonable" values
+    const RANGE: RangeInclusive<usize> = 1..=80;
+    Self::new(u.int_in_range(RANGE)?, u.int_in_range(RANGE)?)
+      .map_err(|_| arbitrary::Error::IncorrectFormat)
   }
 }

@@ -1,4 +1,5 @@
 use super::{PlayableError, Pos};
+use arbitrary::Arbitrary;
 use bitflags::bitflags;
 use lazy_static::lazy_static;
 use serde::{
@@ -147,5 +148,11 @@ impl<'de> Deserialize<'de> for Direction {
     D: Deserializer<'de>,
   {
     deserializer.deserialize_u8(DirectionVisitor)
+  }
+}
+
+impl<'a> Arbitrary<'a> for Direction {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    Ok(Self::from_bits_truncate(u.arbitrary()?))
   }
 }

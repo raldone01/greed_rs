@@ -10,21 +10,24 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-rand = "0.8.5"
-rand_pcg = "0.3.1"
-sha2 = "0.10.2"
 
 [dependencies.greed_lib_rs]
 path = ".."
 
 [[bin]]
 name = "greed_parser"
-path = "fuzz_targets/greed_parser.rs"
+path = "fuzz_targets/fuzz_greed_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "moves"
+path = "fuzz_targets/fuzz_moves.rs"
 test = false
 doc = false
 
 [[bin]]
 name = "seed"
-path = "fuzz_targets/seed.rs"
+path = "fuzz_targets/fuzz_seed.rs"
 test = false
 doc = false

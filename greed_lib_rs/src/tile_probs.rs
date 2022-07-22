@@ -1,3 +1,4 @@
+use arbitrary::Arbitrary;
 use thiserror::Error;
 
 type Inner = [u8; 9];
@@ -24,6 +25,7 @@ impl<'a> IntoIterator for &'a TileProbs {
   }
 }
 impl TileProbs {
+  // TODO: ALL WEIGHTS ZERO
   pub fn new(props: Inner) -> Self {
     props.into()
   }
@@ -72,5 +74,11 @@ impl From<TileProbs> for Inner {
 impl From<Inner> for TileProbs {
   fn from(value: Inner) -> Self {
     Self(value)
+  }
+}
+
+impl<'a> Arbitrary<'a> for TileProbs {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    Ok(Self(<[u8; 9]>::arbitrary(u)?))
   }
 }

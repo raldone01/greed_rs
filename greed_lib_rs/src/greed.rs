@@ -146,11 +146,6 @@ impl Greed {
       game_state
     };
 
-    // if moves and inital_game_field -> gen last_game_field ff
-
-    // if conflicting last_game_field and initial_game_field?
-    // if last_game_field and inital_game_field then compute mask?
-
     // get the game name
     let name = game_meta
       .name
