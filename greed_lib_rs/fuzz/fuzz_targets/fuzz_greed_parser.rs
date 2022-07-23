@@ -1,10 +1,12 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
 
-use greed_lib_rs::Greed;
+use greed_lib_rs::{Direction, Greed, Playable};
 
-fuzz_target!(|data: &[u8]| {
-  if let Ok(data) = std::str::from_utf8(data) {
-    let _ = Greed::load_from_string(data);
+fuzz_target!(|data: &str| {
+  if let Ok(mut game) = Greed::load_from_string(data) {
+    let _ = game.move_(Direction::RIGHT);
+    let _ = game.undo_move();
+    let _ = game.undo_move();
   }
 });

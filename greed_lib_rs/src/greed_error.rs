@@ -36,14 +36,14 @@ pub struct TileParseError {
   pub found: char,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug)]
 pub enum GreedParserError {
   #[error("Empty string")]
   EmptyString,
   #[error("Could not determine the initial game field. Provide at least one of: seed, initial_game_field or last_game_field")]
   MissingGameFieldInformation,
   #[error("Invalid meta data format")]
-  InvalidMetaDataFromat { cause: json5::Error },
+  InvalidMetaDataFromat { cause: serde_json::Error },
   #[error("Invalid duration")]
   InvalidDuration { cause: TryFromIntError },
   #[error("Failed to parse game field")]

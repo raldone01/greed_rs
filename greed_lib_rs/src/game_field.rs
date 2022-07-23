@@ -180,18 +180,16 @@ impl TryFrom<&str> for GameField {
       }
     }
 
-    if y_pos == 0 {
-      return Err(GameFieldParserError::InvalidSize);
-    }
-
     if x_pos != 0 {
       return Err(GameFieldParserError::NoTrailingNewLine);
     }
 
-    let size = Size2D::new_unchecked(
+    let size = Size2D::new(
       x_size.expect("since x_size is set on newlines and y_pos != 0"),
       y_pos,
-    );
+    )
+    .map_err(|_| GameFieldParserError::InvalidSize)?;
+
     assert!(vec.len() == size.tile_count());
     let vec = vec.into_boxed_slice();
 
@@ -273,22 +271,30 @@ impl<'de> Deserialize<'de> for GameField {
       size,
       player_pos,
     } = InnerGameField::deserialize(deserializer)?;
+    // validate that the size matches the vec len
+    if vec.len() != size.tile_count() {
+      return Err(de::Error::custom(format!(
+        "GameField length {} incompatible with size {}",
+        vec.len(),
+        size
+      )));
+    }
     // validate that the player pos is valid
     if !size.is_valid_pos(player_pos) {
       let Size2D { x_size, y_size } = size;
-      Err(de::Error::custom(format!(
+      return Err(de::Error::custom(format!(
         "Player pos {} is not valid. Expected (x: 0..{x_size}, y: 0..{y_size})",
         player_pos
-      )))?
+      )));
     }
     // validate that players underlying tile is an EMPTY tile
     let tile = vec[size.pos_to_index_unchecked(player_pos)];
     if tile != FakeTile::EMTPY {
-      Err(de::Error::custom(format!(
+      return Err(de::Error::custom(format!(
         "Tile at player pos {} not empty tile instead it is {}",
         player_pos,
         Tile::from(tile),
-      )))?
+      )));
     }
     Ok(Self {
       vec,

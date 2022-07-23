@@ -31,3 +31,9 @@ name = "seed"
 path = "fuzz_targets/fuzz_seed.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "game_field_parser"
+path = "fuzz_targets/fuzz_game_field_parser.rs"
+test = false
+doc = false

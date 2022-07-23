@@ -111,7 +111,7 @@ impl Greed {
     #[allow(clippy::iter_nth_zero)]
     let first_char = str.chars().nth(0).ok_or(GreedParserError::EmptyString)?;
     let game_meta = if first_char == '{' {
-      json5::from_str::<GameMeta>(str)
+      serde_json::from_str::<GameMeta>(str)
         .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
     } else {
       // Create default game_meta and set initial_field
@@ -179,7 +179,7 @@ impl Greed {
 
   pub fn save_to_string(&self) -> String {
     let meta = GameMeta::new(self);
-    json5::to_string(&meta).unwrap()
+    serde_json::to_string(&meta).unwrap()
   }
 
   pub fn game_meta(&self) -> GameMeta {
