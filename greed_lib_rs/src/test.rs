@@ -10,7 +10,15 @@ mod seed_test {
       Err(SeedConversionError::UnexpectedHashTag)
     )
   }
-
+  #[test]
+  fn test_seed_no_user_str() {
+    assert_eq!(
+      Seed::try_from("#12x12"),
+      Err(SeedConversionError::UserStringError {
+        cause: UserStringError::Empty
+      })
+    )
+  }
   #[test]
   fn test_seed_no_size() {
     assert_eq!(
