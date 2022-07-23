@@ -94,8 +94,32 @@ mod game_field_test {
   use super::*;
 
   #[test]
-  fn test_ff_probs() {
+  fn test_gen_ff_probs() {
     let seed = Seed::try_from("none#1x1#ffffffffffffffffff").unwrap();
     let _ = GameField::from_seed(&seed);
+  }
+  #[test]
+  fn test_parse_len_to_short() {
+    let x: Result<GameField, _> =
+      serde_json::from_str("{\"vec\":[1,2,0], \"size\":[2, 2], \"player_pos\":[1,1]}");
+    assert!(x.is_err());
+  }
+  #[test]
+  fn test_parse_len_to_long() {
+    let x: Result<GameField, _> =
+      serde_json::from_str("{\"vec\":[1,2,0,4,5], \"size\":[2, 2], \"player_pos\":[1,1]}");
+    assert!(x.is_err());
+  }
+  #[test]
+  fn test_parse_player_outside() {
+    let x: Result<GameField, _> =
+      serde_json::from_str("{\"vec\":[1,2,3,4], \"size\":[2, 2], \"player_pos\":[2,1]}");
+    assert!(x.is_err());
+  }
+  #[test]
+  fn test_parse_player_non_zero() {
+    let x: Result<GameField, _> =
+      serde_json::from_str("{\"vec\":[1,2,3,4], \"size\":[2, 2], \"player_pos\":[1,1]}");
+    assert!(x.is_err());
   }
 }

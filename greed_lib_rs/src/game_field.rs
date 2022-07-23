@@ -155,18 +155,16 @@ impl TryFrom<&str> for GameField {
       }
     }
 
-    if y_pos == 0 {
-      return Err(GameFieldParserError::InvalidSize);
-    }
-
     if x_pos != 0 {
       return Err(GameFieldParserError::NoTrailingNewLine);
     }
 
-    let size = Size2D::new_unchecked(
+    let size = Size2D::new(
       x_size.expect("since x_size is set on newlines and y_pos != 0"),
       y_pos,
-    );
+    )
+    .map_err(|_| GameFieldParserError::InvalidSize)?;
+
     assert!(vec.len() == size.tile_count());
     let vec = vec.into_boxed_slice();
 
@@ -248,6 +246,13 @@ impl<'de> Deserialize<'de> for GameField {
       size: inner_game_field.size,
       player_pos: inner_game_field.player_pos,
     };
+    if game_field.vec.len() != game_field.size.tile_count() {
+      Err(de::Error::custom(format!(
+        "GameField lenght {} incompatible with size {}",
+        game_field.vec.len(),
+        game_field.size
+      )))?
+    }
     // validate that the player pos is valid
     if !game_field.is_valid_pos(game_field.player_pos) {
       let Size2D { x_size, y_size } = game_field.size;
