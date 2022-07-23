@@ -85,7 +85,7 @@ impl UserString {
 
 impl From<UserString> for String {
   fn from(user_str: UserString) -> Self {
-    user_str.0
+    user_str.to_string()
   }
 }
 impl TryFrom<String> for UserString {
@@ -194,7 +194,6 @@ impl Seed {
   }
 }
 
-// TODO CHECK FOR OTHER TYPES
 impl Display for Seed {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let Seed {
@@ -214,7 +213,6 @@ impl Display for Seed {
 }
 impl Debug for Seed {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    // TODO CHECK OTHER
     write!(f, "{self}")
   }
 }
