@@ -24,11 +24,6 @@ impl<'a> IntoIterator for &'a TileProbs {
     self.0.iter()
   }
 }
-impl TileProbs {
-  pub fn new_unchecked(props: Inner) -> Self {
-    Self(props)
-  }
-}
 
 #[derive(Error, Debug, PartialEq)]
 pub enum TileProbsConversionError {

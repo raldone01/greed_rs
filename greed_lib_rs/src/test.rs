@@ -3,8 +3,6 @@ pub use super::*;
 mod seed_test {
   pub use super::*;
 
-  const TEST_TILE_PROBS: [u8; 9] = [17, 34, 51, 68, 85, 102, 119, 136, 153];
-
   #[test]
   fn test_seed_to_many() {
     assert_eq!(
@@ -51,7 +49,7 @@ mod seed_test {
       Ok(Seed::new(
         UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
-        Some(TileProbs::new_unchecked(TEST_TILE_PROBS))
+        Some(TileProbs::try_from([17, 34, 51, 68, 85, 102, 119, 136, 153]).unwrap())
       ))
     )
   }
@@ -72,7 +70,7 @@ mod seed_test {
       &Seed::new(
         UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
         Size2D::new_unchecked(6, 9),
-        Some(TileProbs::new_unchecked(TEST_TILE_PROBS))
+        Some(TileProbs::try_from([17, 34, 51, 68, 85, 102, 119, 136, 153]).unwrap())
       )
       .to_string(),
       "ABCD_abcd_1234#6x9#112233445566778899",
