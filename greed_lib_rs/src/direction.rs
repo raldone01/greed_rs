@@ -1,7 +1,6 @@
 use super::{PlayableError, Pos};
 use arbitrary::Arbitrary;
 use bitflags::bitflags;
-use lazy_static::lazy_static;
 use serde::{
   de::{self, Visitor},
   Deserialize, Deserializer, Serialize,
@@ -55,8 +54,7 @@ impl Direction {
   }
 
   pub fn all_directions_cw() -> &'static [Direction; 8] {
-    lazy_static! { // sad that rust can't evaluate bitflags | at compile time
-      static ref DIRS: [Direction; 8] = [
+    /* static DIRS: [Direction; 8] = [
       Direction::UP,
       Direction::UP | Direction::RIGHT,
       Direction::RIGHT,
@@ -65,8 +63,18 @@ impl Direction {
       Direction::DOWN | Direction::LEFT,
       Direction::LEFT,
       Direction::LEFT | Direction::UP,
+    ]; */
+    // REVISIT: Once rust has support for const impl and bitflags updates to support const |
+    static DIRS: [Direction; 8] = [
+      Direction::UP,
+      Direction::UP.union(Direction::RIGHT),
+      Direction::RIGHT,
+      Direction::RIGHT.union(Direction::DOWN),
+      Direction::DOWN,
+      Direction::DOWN.union(Direction::LEFT),
+      Direction::LEFT,
+      Direction::LEFT.union(Direction::UP),
     ];
-    }
     &DIRS
   }
 }
@@ -153,6 +161,6 @@ impl<'de> Deserialize<'de> for Direction {
 
 impl<'a> Arbitrary<'a> for Direction {
   fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-    Ok(Self::from_bits_truncate(u.arbitrary()?))
+    unsafe { Ok(Self::from_bits_unchecked(u.choose_index(16)?)) }
   }
 }
