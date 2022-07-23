@@ -25,9 +25,8 @@ impl<'a> IntoIterator for &'a TileProbs {
   }
 }
 impl TileProbs {
-  // TODO: ALL WEIGHTS ZERO
-  pub fn new(props: Inner) -> Self {
-    props.into()
+  pub fn new_unchecked(props: Inner) -> Self {
+    Self(props)
   }
 }
 
@@ -37,6 +36,8 @@ pub enum TileProbsConversionError {
   Empty,
   #[error("Invalid Tile Probabilities Format")]
   InvalidFormat,
+  #[error("All Probabilities are Zero")]
+  AllZeros,
   #[error("Invalid Char in Tile Probabilities Format: {c}")]
   InvalidChar { c: char },
   #[error("The wrong amount of chars was given ({count} given, expected 18")]
@@ -62,7 +63,7 @@ impl TryFrom<&str> for TileProbs {
       *val =
         u8::from_str_radix(val_slice, 16).map_err(|_| TileProbsConversionError::InvalidFormat)?;
     }
-    Ok(Self(vals))
+    TileProbs::try_from(vals)
   }
 }
 impl From<TileProbs> for Inner {
@@ -71,9 +72,14 @@ impl From<TileProbs> for Inner {
   }
 }
 
-impl From<Inner> for TileProbs {
-  fn from(value: Inner) -> Self {
-    Self(value)
+impl TryFrom<Inner> for TileProbs {
+  type Error = TileProbsConversionError;
+
+  fn try_from(value: Inner) -> Result<Self, Self::Error> {
+    if value == [0; 9] {
+      return Err(TileProbsConversionError::AllZeros);
+    }
+    Ok(Self(value))
   }
 }
 
