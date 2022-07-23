@@ -161,6 +161,6 @@ impl<'de> Deserialize<'de> for Direction {
 
 impl<'a> Arbitrary<'a> for Direction {
   fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-    unsafe { Ok(Self::from_bits_unchecked(u.choose_index(16)?)) }
+    unsafe { Ok(Self::from_bits_unchecked(u.choose_index(16)? as u8)) }
   }
 }

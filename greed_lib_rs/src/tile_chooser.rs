@@ -13,7 +13,7 @@ impl<'rng, 'a, RNG: Rng> TileChooser<'rng, 'a, RNG> {
   }
 
   pub fn choose(&mut self) -> FakeTile {
-    let weights = self.tile_probs.into_iter();
+    let weights = self.tile_probs.into_iter().map(|&val| u16::from(val));
     let dist = WeightedIndex::new(weights).unwrap();
 
     FakeTile::from_unchecked_u8(dist.sample(self.rng) as u8)

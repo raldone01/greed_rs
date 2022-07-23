@@ -1,17 +1,5 @@
 pub use super::*;
 
-#[test]
-fn greed_from_str() {
-  //assert_eq!(
-  //  *Greed::try_from("1").unwrap().field(),
-  //  GameField {
-  //    vec: Vec::from([Tile::V1]),
-  //    x_size: 1,
-  //    y_size: 0
-  //  }
-  //)
-}
-
 mod seed_test {
   pub use super::*;
 
@@ -101,5 +89,15 @@ mod seed_test {
       .to_string(),
       "ABCD_abcd_1234#6x9",
     )
+  }
+}
+
+mod game_field_test {
+  use super::*;
+
+  #[test]
+  fn test_ff_probs() {
+    let seed = Seed::try_from("none#1x1#ffffffffffffffffff").unwrap();
+    let _ = GameField::from_seed(&seed);
   }
 }

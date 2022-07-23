@@ -85,6 +85,6 @@ impl TryFrom<Inner> for TileProbs {
 
 impl<'a> Arbitrary<'a> for TileProbs {
   fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-    Ok(Self(<[u8; 9]>::arbitrary(u)?))
+    Self::try_from(<[u8; 9]>::arbitrary(u)?).map_err(|_| arbitrary::Error::IncorrectFormat)
   }
 }

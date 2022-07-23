@@ -51,14 +51,18 @@ impl GameField {
   }
 
   fn new_random(tile_chooser: &mut TileChooser<impl Rng>, size: Size2D) -> Self {
-    let vec = (0..size.tile_count())
+    let mut vec: Box<_> = (0..size.tile_count())
       .map(|_| tile_chooser.choose())
       .collect();
 
+    let player_x_pos = tile_chooser.rng.gen_range(0..size.x_size);
+    let player_y_pos = tile_chooser.rng.gen_range(0..size.y_size);
+    vec[player_x_pos + player_y_pos * size.x_size] = FakeTile::EMTPY;
     let player_pos = Pos {
-      x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
-      y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
+      x: player_x_pos as isize,
+      y: player_y_pos as isize,
     };
+
     Self {
       vec,
       size,
