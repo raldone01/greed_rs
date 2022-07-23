@@ -5,8 +5,6 @@ use libfuzzer_sys::fuzz_target;
 
 use greed_lib_rs::{Direction, GameField, GameState, Playable, Seed};
 
-// ISSUE!!!! (game_seed, dirs): (Seed, [Direction; 64])
-// ISSUE!!!! no workspace support
 fuzz_target!(|data: (Seed, [Direction; 64])| {
   let (seed, dirs) = data;
 

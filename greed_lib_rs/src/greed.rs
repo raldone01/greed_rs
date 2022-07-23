@@ -1,6 +1,6 @@
 use super::{
   Amount, Direction, GameField, GameState, GreedParserError, MoveValidationError, Playable,
-  PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
+  PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid, Grid2D
 };
 use chrono::{DateTime, Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
@@ -259,16 +259,28 @@ where
 }
 
 impl TileGrid for Greed {
-  fn dimensions(&self) -> Size2D {
-    self.game_state.dimensions()
-  }
   fn player_pos(&self) -> Pos {
     self.game_state.player_pos()
   }
 
   // The following functions are implemented as wrappers to make sure they aren't generated again
+  fn score(&self) -> usize {
+    self.game_state.score()
+  }
+}
+
+impl Grid2D for Greed {
+  fn dimensions(&self) -> Size2D {
+    self.game_state.dimensions()
+  }
+
+  // The following functions are implemented as wrappers to make sure they aren't generated again
   fn tile_count(&self) -> usize {
     self.game_state.tile_count()
+  }
+
+  fn is_valid_pos(&self, pos: Pos) -> bool {
+    self.game_state.is_valid_pos(pos)
   }
 
   fn valid_pos(&self, pos: Pos) -> Option<Pos> {
@@ -293,9 +305,5 @@ impl TileGrid for Greed {
 
   fn index_to_pos_unchecked(&self, index: usize) -> Pos {
     self.game_state.index_to_pos_unchecked(index)
-  }
-
-  fn score(&self) -> usize {
-    self.game_state.score()
   }
 }

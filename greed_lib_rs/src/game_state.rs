@@ -1,6 +1,6 @@
 use super::{
-  Amount, Direction, FakeTile, GameField, Playable, PlayableError, Pos, Size2D, Tile, TileGet,
-  TileGrid,
+  Amount, Direction, FakeTile, GameField, Grid2D, Playable, PlayableError, Pos, Size2D, Tile,
+  TileGet, TileGrid,
 };
 use bitvec::prelude as bv;
 use std::{
@@ -73,11 +73,11 @@ impl GameState {
   }
 
   pub(super) fn try_rebuild_from_game_field_diff(
-    inital_game_field: Rc<GameField>,
+    initial_game_field: Rc<GameField>,
     last_game_field: &GameField,
     moves: Vec<(Direction, Amount)>,
   ) -> Result<Self, GameStateRebuildFromDiffError> {
-    let initial_size = inital_game_field.dimensions();
+    let initial_size = initial_game_field.dimensions();
     let last_size = last_game_field.dimensions();
     if initial_size != last_size {
       Err(GameStateRebuildFromDiffError::DimensionsNotEqual {
@@ -95,7 +95,7 @@ impl GameState {
     mask.set(player_index, false);
 
     for it in 0..tile_count {
-      let initial_tile = inital_game_field.vec[it];
+      let initial_tile = initial_game_field.vec[it];
       let last_tile = last_game_field.vec[it];
       if last_tile == FakeTile::EMTPY {
         mask.set(it, false);
@@ -112,7 +112,7 @@ impl GameState {
       mask,
       player_pos,
       moves,
-      game_field: inital_game_field,
+      game_field: initial_game_field,
     })
   }
 
@@ -149,16 +149,8 @@ impl GameState {
 }
 
 impl TileGrid for GameState {
-  fn dimensions(&self) -> Size2D {
-    self.game_field.dimensions()
-  }
-
   fn player_pos(&self) -> Pos {
     self.player_pos
-  }
-
-  fn tile_count(&self) -> usize {
-    self.mask.len()
   }
 }
 
@@ -304,6 +296,46 @@ impl Playable for GameState {
     self.moves().len()
   }
 }
+
+impl Grid2D for GameState {
+  fn dimensions(&self) -> Size2D {
+    self.game_field.dimensions()
+  }
+
+  fn tile_count(&self) -> usize {
+    self.mask.len()
+  }
+
+  // The following functions are implemented as wrappers to make sure they aren't generated again
+  fn is_valid_pos(&self, pos: Pos) -> bool {
+    self.game_field.is_valid_pos(pos)
+  }
+
+  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    self.game_field.valid_pos(pos)
+  }
+
+  fn valid_index(&self, index: usize) -> Option<usize> {
+    self.game_field.valid_index(index)
+  }
+
+  fn pos_to_index(&self, pos: Pos) -> Option<usize> {
+    self.game_field.pos_to_index(pos)
+  }
+
+  fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
+    self.game_field.pos_to_index_unchecked(pos)
+  }
+
+  fn index_to_pos(&self, index: usize) -> Option<Pos> {
+    self.game_field.index_to_pos(index)
+  }
+
+  fn index_to_pos_unchecked(&self, index: usize) -> Pos {
+    self.game_field.index_to_pos_unchecked(index)
+  }
+}
+
 impl Display for GameState {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     self.display_fmt(f)

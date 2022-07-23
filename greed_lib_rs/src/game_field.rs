@@ -1,15 +1,11 @@
-use rand::prelude::*;
-use serde::{
-  de::{self},
-  Deserialize, Deserializer, Serialize,
+use super::{
+  FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Grid2D, Pos, Seed, Size2D,
+  Tile, TileChooser, TileGet, TileGrid, DEFAULT_SIZE,
 };
+use rand::prelude::*;
+use serde::{de, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha512};
 use std::fmt::{Debug, Display};
-
-use super::{
-  FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Pos, Seed, Size2D, Tile,
-  TileChooser, TileGet, TileGrid, DEFAULT_SIZE,
-};
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
@@ -20,20 +16,6 @@ pub struct GameField {
   size: Size2D,
   /// initial player_pos
   player_pos: Pos,
-}
-
-impl TileGrid for GameField {
-  fn dimensions(&self) -> Size2D {
-    self.size
-  }
-
-  fn player_pos(&self) -> Pos {
-    self.player_pos
-  }
-
-  fn tile_count(&self) -> usize {
-    self.vec.len()
-  }
 }
 
 impl GameField {
@@ -55,13 +37,11 @@ impl GameField {
       .map(|_| tile_chooser.choose())
       .collect();
 
-    let player_x_pos = tile_chooser.rng.gen_range(0..size.x_size);
-    let player_y_pos = tile_chooser.rng.gen_range(0..size.y_size);
-    vec[player_x_pos + player_y_pos * size.x_size] = FakeTile::EMTPY;
     let player_pos = Pos {
-      x: player_x_pos as isize,
-      y: player_y_pos as isize,
+      x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
+      y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
     };
+    vec[size.pos_to_index_unchecked(player_pos)] = FakeTile::EMTPY;
 
     Self {
       vec,
@@ -80,6 +60,51 @@ impl GameField {
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
     let mut tile_chooser = TileChooser::new(&mut rng, seed.tile_probabilities());
     GameField::new_random(&mut tile_chooser, seed.size())
+  }
+}
+
+impl TileGrid for GameField {
+  fn player_pos(&self) -> Pos {
+    self.player_pos
+  }
+}
+
+impl Grid2D for GameField {
+  fn dimensions(&self) -> Size2D {
+    self.size
+  }
+
+  fn tile_count(&self) -> usize {
+    self.vec.len()
+  }
+
+  // The following functions are implemented as wrappers to make sure they aren't generated again
+  fn is_valid_pos(&self, pos: Pos) -> bool {
+    self.size.is_valid_pos(pos)
+  }
+
+  fn valid_pos(&self, pos: Pos) -> Option<Pos> {
+    self.size.valid_pos(pos)
+  }
+
+  fn valid_index(&self, index: usize) -> Option<usize> {
+    self.size.valid_index(index)
+  }
+
+  fn pos_to_index(&self, pos: Pos) -> Option<usize> {
+    self.size.pos_to_index(pos)
+  }
+
+  fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
+    self.size.pos_to_index_unchecked(pos)
+  }
+
+  fn index_to_pos(&self, index: usize) -> Option<Pos> {
+    self.size.index_to_pos(index)
+  }
+
+  fn index_to_pos_unchecked(&self, index: usize) -> Pos {
+    self.size.index_to_pos_unchecked(index)
   }
 }
 
@@ -236,35 +261,39 @@ impl<'de> Deserialize<'de> for GameField {
   where
     D: Deserializer<'de>,
   {
+    // Sadly serde does not provide a validation hook
     #[derive(Deserialize)]
     struct InnerGameField {
       vec: Box<[FakeTile]>,
       size: Size2D,
       player_pos: Pos,
     }
-    let inner_game_field = InnerGameField::deserialize(deserializer)?;
-    let game_field = Self {
-      vec: inner_game_field.vec,
-      size: inner_game_field.size,
-      player_pos: inner_game_field.player_pos,
-    };
+    let InnerGameField {
+      vec,
+      size,
+      player_pos,
+    } = InnerGameField::deserialize(deserializer)?;
     // validate that the player pos is valid
-    if !game_field.is_valid_pos(game_field.player_pos) {
-      let Size2D { x_size, y_size } = game_field.size;
+    if !size.is_valid_pos(player_pos) {
+      let Size2D { x_size, y_size } = size;
       Err(de::Error::custom(format!(
         "Player pos {} is not valid. Expected (x: 0..{x_size}, y: 0..{y_size})",
-        game_field.player_pos
+        player_pos
       )))?
     }
     // validate that players underlying tile is an EMPTY tile
-    let tile = game_field.vec[game_field.pos_to_index_unchecked(game_field.player_pos)];
+    let tile = vec[size.pos_to_index_unchecked(player_pos)];
     if tile != FakeTile::EMTPY {
       Err(de::Error::custom(format!(
         "Tile at player pos {} not empty tile instead it is {}",
-        game_field.player_pos,
+        player_pos,
         Tile::from(tile),
       )))?
     }
-    Ok(game_field)
+    Ok(Self {
+      vec,
+      size,
+      player_pos,
+    })
   }
 }

@@ -1,10 +1,9 @@
+use super::{Grid2D, Pos};
 use arbitrary::Arbitrary;
 use core::fmt;
 use serde::{Deserialize, Serialize};
 use std::{num::TryFromIntError, ops::RangeInclusive};
 use thiserror::Error;
-
-use super::Pos;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -32,6 +31,12 @@ impl Size2D {
   }
   pub fn tile_count(&self) -> usize {
     self.x_size * self.y_size
+  }
+}
+
+impl Grid2D for Size2D {
+  fn dimensions(&self) -> Size2D {
+    *self
   }
 }
 

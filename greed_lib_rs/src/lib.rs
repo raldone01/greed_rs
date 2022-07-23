@@ -27,6 +27,9 @@ pub use game_state::{GameState, GameStateRebuildFromDiffError};
 mod playable;
 pub use playable::Playable;
 
+mod grid_2d;
+pub use grid_2d::Grid2D;
+
 mod tile_grid;
 pub use tile_grid::{
   ColIterator, RowIterator, StrideTileIterator, TileGet, TileGrid, TileIterator,
