@@ -18,6 +18,35 @@ mod seed_test {
   const TEST_TILE_PROBS: [u8; 9] = [17, 34, 51, 68, 85, 102, 119, 136, 153];
 
   #[test]
+  fn test_seed_to_many() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#6x9#112233445566778899#1212312"),
+      Err(SeedConversionError::UnexpectedHashTag)
+    )
+  }
+
+  #[test]
+  fn test_seed_no_size() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234").unwrap(),
+      Seed::new(
+        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
+        DEFAULT_SIZE,
+        Some(DEFAULT_TILE_PROBABILITIES) // Could also use None
+      )
+    )
+  }
+  #[test]
+  fn test_seed_only_probs() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#112233445566778899"),
+      Err(SeedConversionError::InvalidDimension {
+        cause: Size2DConversionError::InvalidFormat
+      })
+    )
+  }
+
+  #[test]
   fn test_parsing_a_seed() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9#112233445566778899").unwrap(),
