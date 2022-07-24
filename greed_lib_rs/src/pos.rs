@@ -16,6 +16,7 @@ pub struct Pos {
 }
 
 impl Pos {
+  #[must_use]
   pub fn new(x: isize, y: isize) -> Self {
     Pos { x, y }
   }

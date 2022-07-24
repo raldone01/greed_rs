@@ -2,13 +2,14 @@ use super::{Pos, Size2D};
 
 pub trait Grid2D {
   /// For the default implementations to work the each
-  /// value in the returned tuple must not exceed isize::MAX.
+  /// value in the returned tuple must not exceed `isize::MAX`.
   fn dimensions(&self) -> Size2D;
   /// Can also be interpreted as the maximum score
   fn tile_count(&self) -> usize {
     let Size2D { x_size, y_size } = self.dimensions();
     x_size * y_size
   }
+  #[allow(clippy::cast_possible_wrap)] // The sizes in Size2D are limited
   fn is_valid_pos(&self, pos: Pos) -> bool {
     let Size2D { x_size, y_size } = self.dimensions();
     let x_size = x_size as isize;
@@ -38,13 +39,19 @@ pub trait Grid2D {
   /// Assumes that the position is valid.
   fn pos_to_index_unchecked(&self, pos: Pos) -> usize {
     let x_size = self.dimensions().x_size;
-    pos.x as usize + (pos.y as usize) * x_size
+    #[allow(clippy::cast_sign_loss)]
+    // Since we this function is unchecked, we can assume pos is valid and therefore non negative.
+    {
+      pos.x as usize + (pos.y as usize) * x_size
+    }
   }
   fn index_to_pos(&self, index: usize) -> Option<Pos> {
     let index = self.valid_index(index)?;
     Some(self.index_to_pos_unchecked(index))
   }
   /// Assumes that the index is valid
+  #[allow(clippy::cast_possible_wrap)]
+  // Since we this function is unchecked, we can assume index is valid and therefore less than `MAX_TILE_COUNT`.
   fn index_to_pos_unchecked(&self, index: usize) -> Pos {
     let x_size = self.dimensions().x_size;
     let y = (index / x_size) as isize;

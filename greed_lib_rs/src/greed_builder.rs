@@ -1,6 +1,7 @@
 use super::{Greed, Seed, Size2D, TileProbs, DEFAULT_SIZE};
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct GreedBuilder {
   name: Option<String>,
 }
@@ -17,6 +18,7 @@ impl GreedBuilder {
       tile_probs: None,
     }
   }
+
   pub fn tile_probs(self, probs: TileProbs) -> SizeProbGreedBuilder {
     SizeProbGreedBuilder {
       name: self.name,
@@ -36,7 +38,7 @@ impl GreedBuilder {
     self.name = Some(name);
     self
   }
-
+  #[must_use]
   pub fn build(self) -> Greed {
     SizeProbGreedBuilder {
       name: self.name,
@@ -53,6 +55,7 @@ impl Default for GreedBuilder {
 }
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct SeedGreedBuilder {
   name: Option<String>,
   seed: Seed,
@@ -71,6 +74,7 @@ impl SeedGreedBuilder {
 }
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct SizeProbGreedBuilder {
   name: Option<String>,
   size: Option<Size2D>,

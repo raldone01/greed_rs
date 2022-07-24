@@ -36,7 +36,7 @@ impl GameField {
     let mut vec: Box<_> = (0..size.tile_count())
       .map(|_| tile_chooser.choose())
       .collect();
-
+    #[allow(clippy::cast_possible_wrap)] // Can nerver wrap since Sice2D contains limited sizes.
     let player_pos = Pos {
       x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
       y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
@@ -50,6 +50,7 @@ impl GameField {
     }
   }
 
+  #[must_use]
   pub fn from_seed(seed: &Seed) -> GameField {
     let mut hasher = Sha512::new();
     hasher.update(seed.user_str());

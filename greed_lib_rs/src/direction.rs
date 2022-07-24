@@ -1,4 +1,4 @@
-use super::{PlayableError, Pos};
+use super::Pos;
 use arbitrary::Arbitrary;
 use bitflags::bitflags;
 use serde::{de, Deserialize, Deserializer, Serialize};
@@ -17,6 +17,10 @@ bitflags! {
 }
 
 impl Direction {
+  /// Checks if a direction is valid.
+  /// A valid direction must actually change position when moved.
+  /// thereby `0`, `UP | DOWN`, `LEFT | RIGHT` and  `LEFT | RIGHT | UP | DOWN` are invalid
+  #[must_use]
   pub fn is_valid(self) -> bool {
     // Previous Impl:
     //  let invalid = self.reduce().is_empty();
@@ -26,15 +30,8 @@ impl Direction {
       | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT))
   }
 
-  pub fn valid(self) -> Result<(), PlayableError> {
-    if self.is_valid() {
-      Ok(())
-    } else {
-      Err(PlayableError::InvalidDirection)
-    }
-  }
-
   /// disambiguates a direction
+  #[must_use]
   pub fn reduce(mut self) -> Self {
     if self.contains(Direction::UP | Direction::DOWN) {
       self ^= Direction::UP | Direction::DOWN;
@@ -46,10 +43,12 @@ impl Direction {
   }
 
   /// Same as !dir
+  #[must_use]
   pub fn reverse(self) -> Self {
     !self
   }
 
+  #[must_use]
   pub fn all_directions_cw() -> &'static [Direction; 8] {
     /* static DIRS: [Direction; 8] = [
       Direction::UP,
@@ -142,6 +141,9 @@ impl<'de> Deserialize<'de> for Direction {
 
 impl<'a> Arbitrary<'a> for Direction {
   fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-    unsafe { Ok(Self::from_bits_unchecked(u.choose_index(16)? as u8)) }
+    #[allow(clippy::cast_possible_truncation)] // Can never truncate since it is always < 16
+    unsafe {
+      Ok(Self::from_bits_unchecked(u.choose_index(16)? as u8))
+    }
   }
 }

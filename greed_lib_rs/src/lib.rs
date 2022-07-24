@@ -1,4 +1,6 @@
-#[allow(clippy::module_inception)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+
 mod greed;
 pub use greed::{GameMeta, Greed};
 

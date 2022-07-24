@@ -20,16 +20,21 @@ pub const DEFAULT_SIZE: Size2D = Size2D {
 };
 
 #[cfg(not(fuzz))]
-const MAX_TILE_COUNT: usize = 65536; // Max 64kB (for now) (256 x 265 Grid)
-                                     // Must be smaller than isize::MAX
+pub const MAX_TILE_COUNT: usize = 65536; // Max 64kB (for now) (256 x 265 Grid)
+                                         // Must be smaller than isize::MAX
 
 #[cfg(fuzz)]
-const MAX_TILE_COUNT: usize = 1024; // Limit the size to 32x32 for fuzzing to speed it up
+pub const MAX_TILE_COUNT: usize = 1024; // Limit the size to 32x32 for fuzzing to speed it up
 
 impl Size2D {
   pub(super) fn new_unchecked(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }
   }
+  /// Creates a now `Size2D`, checking if it is actually valid.
+  /// # Errors
+  /// * If any Dimension is zero.
+  /// * The product of the Dimensions overflows.
+  /// * The product of the Dimensions is larger than `MAX_TILE_COUNT`.
   pub fn new(x_size: usize, y_size: usize) -> Result<Self, Size2DConversionError> {
     let (tile_count, overflow) = x_size.overflowing_mul(y_size);
     if tile_count == 0 {
@@ -42,6 +47,7 @@ impl Size2D {
     }
     Ok(Self::new_unchecked(x_size, y_size))
   }
+  #[must_use]
   pub fn tile_count(&self) -> usize {
     self.x_size * self.y_size
   }

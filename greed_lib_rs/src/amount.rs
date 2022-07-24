@@ -25,9 +25,11 @@ impl Display for Amount {
 }
 
 impl Amount {
+  #[must_use]
   pub fn amount(self) -> u8 {
     self.0
   }
+  #[must_use]
   pub(super) fn new_unchecked(val: u8) -> Self {
     Self(val)
   }
@@ -54,6 +56,7 @@ impl TryFrom<usize> for Amount {
   type Error = AmountConversionError;
   fn try_from(val: usize) -> Result<Self, Self::Error> {
     if val < 10 {
+      #[allow(clippy::cast_possible_truncation)] // Never actually truncates since `val < 10`
       Ok(Self(val as u8)) // safe since val is < 10
     } else {
       Err(AmountConversionError::ToBig)

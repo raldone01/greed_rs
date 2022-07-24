@@ -33,6 +33,7 @@ pub struct GameMeta {
 }
 
 impl GameMeta {
+  #[must_use]
   pub fn new(greed: &Greed) -> Self {
     let utc_started_ms = greed
       .started_instant
@@ -93,10 +94,12 @@ impl Greed {
     }
   }
 
+  #[must_use]
   pub fn name(&self) -> &str {
     &self.name
   }
 
+  #[must_use]
   pub fn seed(&self) -> Option<&Seed> {
     self.seed.as_ref()
   }
@@ -104,7 +107,9 @@ impl Greed {
   // pub fn load_from_reader() {}
   // pub fn save_to_writer() {}
 
-  /// Accepts either GameMeta as Json5 or one GameField-String and creates a Greed instance from it.
+  /// Accepts either `GameMeta` as json or one GameField-String and creates a Greed instance from it.
+  /// # Errors
+  /// If if `str` doesn't contain a valid serialized Game
   pub fn load_from_string(str: &str) -> Result<Greed, GreedParserError> {
     // load the meta data if available
 
@@ -178,47 +183,60 @@ impl Greed {
     })
   }
 
+  #[must_use]
   pub fn save_to_string(&self) -> String {
     let meta = GameMeta::new(self);
-    serde_json::to_string(&meta).unwrap()
+    serde_json::to_string(&meta)
+      .expect("Serialize is never implemented manually and no Maps are used")
   }
 
+  #[must_use]
   pub fn game_meta(&self) -> GameMeta {
     GameMeta::new(self)
   }
 
+  #[must_use]
   pub fn game_state(&self) -> &GameState {
     &self.game_state
   }
 
+  #[must_use]
   pub fn session_time(&self) -> std::time::Duration {
     Instant::now() - self.started_session
   }
 
+  #[must_use]
   pub fn time_spent(&self) -> std::time::Duration {
     self.time_spent + self.session_time()
   }
 
+  #[must_use]
   pub fn total_move_count(&self) -> usize {
     self.game_state.move_count() + self.undos
   }
 
+  #[must_use]
   pub fn undo_count(&self) -> usize {
     self.undos
   }
 
   /// Validates the moves array
+  #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)] // Remove when actually implemented
   pub fn validate_moves() -> Result<(), MoveValidationError> {
     todo!()
   }
 
   /// Validates if the seed reproduces the saved game state and checks that all moves are valid.
   /// Also uses a difficulty map if available.
+  #[allow(clippy::missing_panics_doc, clippy::missing_errors_doc)]
+  // Remove when actually implemented
   pub fn validate_reproducibility() -> Result<(), ReproductionError> {
     todo!()
   }
 
   /// TODO: Returns 0 for now
+  #[must_use]
+  #[allow(clippy::unused_self)] // Remove when actually implemented
   pub fn human_score(&self) -> usize {
     0
   }

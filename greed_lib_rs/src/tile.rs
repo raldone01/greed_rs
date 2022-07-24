@@ -61,6 +61,7 @@ impl<'de> Deserialize<'de> for Tile {
 impl Tile {
   pub const EMPTY: Tile = Tile::V0;
 
+  #[must_use]
   pub fn amount(self) -> Option<u8> {
     if self == Tile::Player {
       None
@@ -69,10 +70,12 @@ impl Tile {
     }
   }
 
+  #[must_use]
   pub fn is_player(self) -> bool {
     self == Tile::Player
   }
 
+  #[must_use]
   pub fn is_empty(self) -> bool {
     self == Tile::EMPTY
   }
@@ -99,6 +102,7 @@ impl TryFrom<char> for Tile {
     match value {
       '@' => Ok(Tile::Player),
       ' ' => Ok(Tile::V0),
+      #[allow(clippy::cast_possible_truncation)] // Always is <= 9
       c => c
         .to_digit(10)
         .map(|num| Tile::try_from(num as u8).unwrap())

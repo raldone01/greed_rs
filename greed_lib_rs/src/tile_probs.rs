@@ -51,7 +51,7 @@ impl TryFrom<&str> for TileProbs {
     }
     let mut val_slices = value.as_bytes().chunks(2);
     let mut vals = [0; 9];
-    for val in vals.iter_mut() {
+    for val in &mut vals {
       let val_slice = val_slices.next().unwrap(); // since we checked the size previously this check is redundant
       let val_slice =
         std::str::from_utf8(val_slice).map_err(|_| TileProbsConversionError::InvalidFormat)?;

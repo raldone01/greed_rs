@@ -50,6 +50,7 @@ impl From<TileProbsConversionError> for SeedConversionError {
   }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[must_use]
 pub struct UserString(String);
 
 impl UserString {
@@ -68,7 +69,11 @@ impl UserString {
       })
   }
   const RANDOM_USER_STRING_LENGTH: usize = 16;
+
+  // TODO: maybe use lazy static to generate all valid chars and pick from them
   const RANDOM_USER_STRING_DISTRIBUTION: Alphanumeric = Alphanumeric;
+
+  #[must_use]
   pub fn as_str(&self) -> &str {
     &self.0[..]
   }
@@ -118,16 +123,16 @@ impl<'a> Arbitrary<'a> for UserString {
 
 /// # Seed format yummy:
 ///
-/// The seed encodes the user_str, the dimensions and optionally the probabilities for all tiles.
-/// The dimensions and probabilies are encoded as ~upper_alternating_case~ hex.
+/// The seed encodes the `user_str` and optionally the `size` and the `tile_probabilities` for all tiles.
+/// The dimensions and probabilies are encoded as ~`upper_alternating_case`~ hex.
 ///
-/// \# is used as a separator
+/// `\#` is used as a separator
 ///
-/// <> is a placeholder
+/// `<>` is a placeholder
 ///
-/// [] indicates optional
+/// `[]` indicates optional
 ///
-/// Format: <user_str>[#<x_size>x<y_size>[#112233445566778899]]
+/// Format: `<user_str>[#<x_size>x<y_size>[#112233445566778899]]`
 ///
 /// Representation:
 /// * `user_str: A-Za-z0-9_`
@@ -137,6 +142,7 @@ impl<'a> Arbitrary<'a> for UserString {
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "&str")]
 #[serde(into = "String")]
+#[must_use]
 pub struct Seed {
   tile_probabilities: TileProbs,
   size: Size2D,
@@ -144,7 +150,7 @@ pub struct Seed {
 }
 
 impl Seed {
-  /// tile_probabilities == None uses: `DEFAULT_TILE_PROBABILITIES`
+  /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new(user_str: UserString, size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
       tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
@@ -152,7 +158,7 @@ impl Seed {
       user_str,
     }
   }
-  /// tile_probabilities == None uses: `DEFAULT_TILE_PROBABILITIES`
+  /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new_random(size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
       tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
@@ -160,12 +166,15 @@ impl Seed {
       user_str: UserString::new_random(),
     }
   }
+  #[must_use]
   pub fn user_str(&self) -> &str {
     &self.user_str.0
   }
+  #[must_use]
   pub fn size(&self) -> Size2D {
     self.size
   }
+  #[must_use]
   pub fn tile_probabilities(&self) -> &TileProbs {
     &self.tile_probabilities
   }
