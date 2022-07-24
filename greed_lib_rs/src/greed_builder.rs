@@ -46,6 +46,11 @@ impl GreedBuilder {
     .build()
   }
 }
+impl Default for GreedBuilder {
+  fn default() -> Self {
+    Self::new()
+  }
+}
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct SeedGreedBuilder {

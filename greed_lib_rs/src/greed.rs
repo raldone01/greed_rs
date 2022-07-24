@@ -161,10 +161,11 @@ impl Greed {
       name,
       started_instant: game_meta
         .utc_started_ms
-        .map(|utc_started_ms| Utc.timestamp_millis(utc_started_ms)),
+        .and_then(|utc_started_ms| Utc.timestamp_millis_opt(utc_started_ms).single()),
       finished_instant: game_meta
         .utc_finished_ms
-        .map(|utc_finished_ms| Utc.timestamp_millis(utc_finished_ms)),
+        .and_then(|utc_finished_ms| Utc.timestamp_millis_opt(utc_finished_ms).single()),
+
       started_session: Instant::now(),
       time_spent: Duration::from_millis(
         game_meta

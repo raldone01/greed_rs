@@ -11,6 +11,44 @@ mod seed_test {
     )
   }
   #[test]
+  fn test_seed_size_zero_x() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#0x9#112233445566778899#1212312"),
+      Err(SeedConversionError::InvalidDimension {
+        cause: Size2DConversionError::ZeroSize
+      })
+    )
+  }
+  #[test]
+  fn test_seed_size_zero_y() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#6x0#112233445566778899#1212312"),
+      Err(SeedConversionError::InvalidDimension {
+        cause: Size2DConversionError::ZeroSize
+      })
+    )
+  }
+  #[test]
+  fn test_seed_size_zero_both() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#0x0#112233445566778899#1212312"),
+      Err(SeedConversionError::InvalidDimension {
+        cause: Size2DConversionError::ZeroSize
+      })
+    )
+  }
+  #[test]
+  fn test_seed_size_large() {
+    assert_eq!(
+      Seed::try_from("ABCD_abcd_1234#ffffffffffffffffx2#112233445566778899#1212312"),
+      Err(SeedConversionError::InvalidDimension {
+        cause: Size2DConversionError::SizeOutOfRange {
+          actual_size: 18446744073709551615
+        }
+      })
+    )
+  }
+  #[test]
   fn test_seed_no_user_str() {
     assert_eq!(
       Seed::try_from("#12x12"),
@@ -129,5 +167,16 @@ mod game_field_test {
     let x: Result<GameField, _> =
       serde_json::from_str("{\"vec\":[1,2,3,4], \"size\":[2, 2], \"player_pos\":[1,1]}");
     assert!(x.is_err());
+  }
+}
+
+mod greed_test {
+  use super::*;
+
+  #[test]
+  fn test_invalid_end_time() {
+    let _ =
+      Greed::load_from_string("{\"utc_finished_ms\":200000000000000000, \"seed\":\"e\"}").unwrap();
+    // For now only verify that the Greed doesn't panic or error out
   }
 }
