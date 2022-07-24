@@ -14,6 +14,8 @@ use greed_lib_rs::{Direction, Greed, Playable};
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
+  Direction::from_bits(4);
+
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 
   println!("Initial field:\n{}", greed.game_state());

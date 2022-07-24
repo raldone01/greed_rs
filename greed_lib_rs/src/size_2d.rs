@@ -19,12 +19,19 @@ pub const DEFAULT_SIZE: Size2D = Size2D {
   y_size: 21,
 };
 
+#[cfg(not(fuzz))]
+const MAX_TILE_COUNT: usize = 65536; // Max 64kB (for now) (256 x 265 Grid)
+
+#[cfg(fuzz)]
+const MAX_TILE_COUNT: usize = 1024; // Limit the size to 32x32 for fuzzing to speed it up
+
 impl Size2D {
   pub(super) fn new_unchecked(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }
   }
   pub fn new(x_size: usize, y_size: usize) -> Result<Self, Size2DConversionError> {
-    if x_size == 0 || y_size == 0 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
+    let (tile_count, overflow) = x_size.overflowing_mul(y_size);
+    if overflow || tile_count == 0 || tile_count > MAX_TILE_COUNT {
       return Err(Size2DConversionError::OutOfRange);
     }
     Ok(Self::new_unchecked(x_size, y_size))

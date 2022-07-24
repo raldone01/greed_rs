@@ -1,6 +1,6 @@
 use super::{
-  Amount, Direction, GameField, GameState, GreedParserError, MoveValidationError, Playable,
-  PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid, Grid2D
+  Amount, Direction, GameField, GameState, GreedParserError, Grid2D, MoveValidationError, Playable,
+  PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
 use chrono::{DateTime, Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};

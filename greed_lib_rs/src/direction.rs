@@ -1,10 +1,7 @@
 use super::{PlayableError, Pos};
 use arbitrary::Arbitrary;
 use bitflags::bitflags;
-use serde::{
-  de::{self, Visitor},
-  Deserialize, Deserializer, Serialize,
-};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use std::{
   fmt,
   ops::{Mul, Neg},
@@ -133,29 +130,13 @@ impl Serialize for Direction {
   }
 }
 
-struct DirectionVisitor;
-
-impl<'de> Visitor<'de> for DirectionVisitor {
-  type Value = Direction;
-
-  fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-    formatter.write_str("u8 from 0..=15")
-  }
-
-  fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
-  where
-    E: de::Error,
-  {
-    Direction::from_bits(v).ok_or_else(|| E::custom("Invalid direction"))
-  }
-}
-
 impl<'de> Deserialize<'de> for Direction {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
     D: Deserializer<'de>,
   {
-    deserializer.deserialize_u8(DirectionVisitor)
+    Direction::from_bits(u8::deserialize(deserializer)?)
+      .ok_or_else(|| de::Error::custom("Invalid direction"))
   }
 }
 
