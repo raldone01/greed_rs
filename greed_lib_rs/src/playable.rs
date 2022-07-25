@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 use super::{Direction, GameField, PlayableError};
 
 pub trait Playable {

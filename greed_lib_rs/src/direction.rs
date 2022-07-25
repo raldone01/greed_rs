@@ -1,11 +1,11 @@
 use super::Pos;
 use arbitrary::Arbitrary;
 use bitflags::bitflags;
-use serde::{de, Deserialize, Deserializer, Serialize};
-use std::{
+use core::{
   fmt,
   ops::{Mul, Neg},
 };
+use serde::{de, Deserialize, Deserializer, Serialize};
 
 bitflags! {
   pub struct Direction: u8 {

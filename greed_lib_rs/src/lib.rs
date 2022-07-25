@@ -1,5 +1,7 @@
 #![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
+#![no_std]
+extern crate alloc;
 
 mod greed;
 pub use greed::{GameMeta, Greed};

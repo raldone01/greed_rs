@@ -1,5 +1,5 @@
 use arbitrary::Arbitrary;
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 type Inner = [u8; 9];
 
@@ -54,7 +54,7 @@ impl TryFrom<&str> for TileProbs {
     for val in &mut vals {
       let val_slice = val_slices.next().unwrap(); // since we checked the size previously this check is redundant
       let val_slice =
-        std::str::from_utf8(val_slice).map_err(|_| TileProbsConversionError::InvalidFormat)?;
+        core::str::from_utf8(val_slice).map_err(|_| TileProbsConversionError::InvalidFormat)?;
       *val =
         u8::from_str_radix(val_slice, 16).map_err(|_| TileProbsConversionError::InvalidFormat)?;
     }

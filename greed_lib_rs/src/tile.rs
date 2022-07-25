@@ -1,9 +1,10 @@
+use alloc::format;
+use core::fmt::{self, Debug, Display, Formatter};
 use num_enum::TryFromPrimitive;
 use serde::{
   de::{self, Visitor},
   Deserialize, Deserializer, Serialize,
 };
-use std::fmt;
 
 use super::TileParseError;
 
@@ -45,7 +46,7 @@ impl<'de> Visitor<'de> for TileVisitor {
   where
     E: de::Error,
   {
-    Tile::try_from(v).map_err(|err| E::custom(err.to_string()))
+    Tile::try_from(v).map_err(|err| E::custom(format!("{}", err)))
   }
 }
 
@@ -111,8 +112,8 @@ impl TryFrom<char> for Tile {
   }
 }
 
-impl fmt::Display for Tile {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for Tile {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     let mut c = char::from(*self);
     if c == '0' {
       c = ' ';
@@ -121,8 +122,8 @@ impl fmt::Display for Tile {
   }
 }
 
-impl fmt::Debug for Tile {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Debug for Tile {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "Tile{self}")
   }
 }

@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
-use std::{
+use core::{
   fmt,
   ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use serde::{Deserialize, Serialize};
 
 use super::{Amount, Direction};
 

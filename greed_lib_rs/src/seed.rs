@@ -2,11 +2,12 @@ use super::{
   Size2D, Size2DConversionError, TileProbs, TileProbsConversionError, DEFAULT_SIZE,
   DEFAULT_TILE_PROBABILITIES,
 };
+use alloc::{fmt, format, string::String};
 use arbitrary::Arbitrary;
+use core::fmt::{Debug, Display, Formatter, Write};
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Write};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum UserStringError {
@@ -90,7 +91,7 @@ impl UserString {
 
 impl From<UserString> for String {
   fn from(user_str: UserString) -> Self {
-    user_str.to_string()
+    format!("{user_str}")
   }
 }
 impl TryFrom<String> for UserString {
@@ -101,8 +102,16 @@ impl TryFrom<String> for UserString {
     Ok(Self(user_str))
   }
 }
+impl TryFrom<&str> for UserString {
+  type Error = UserStringError;
+
+  fn try_from(user_str: &str) -> Result<Self, Self::Error> {
+    Self::validate_user_string(user_str)?;
+    Ok(Self(String::from(user_str)))
+  }
+}
 impl Display for UserString {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Display::fmt(&self.0, f)
   }
 }
@@ -204,7 +213,7 @@ impl Seed {
 }
 
 impl Display for Seed {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     let Seed {
       size: Size2D { x_size, y_size },
       user_str,
@@ -221,19 +230,19 @@ impl Display for Seed {
   }
 }
 impl Debug for Seed {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{self}")
   }
 }
 
 impl From<&Seed> for String {
   fn from(seed: &Seed) -> Self {
-    seed.to_string()
+    format!("{seed}")
   }
 }
 impl From<Seed> for String {
   fn from(seed: Seed) -> Self {
-    seed.to_string()
+    format!("{seed}")
   }
 }
 
@@ -242,7 +251,7 @@ impl TryFrom<&str> for Seed {
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let (user_str_slice, size, tile_probabilities) = Self::partial_verify(value)?;
-    let user_str = UserString::try_from(user_str_slice.to_string())?;
+    let user_str = UserString::try_from(String::from(user_str_slice))?;
     Ok(Self {
       tile_probabilities,
       size,

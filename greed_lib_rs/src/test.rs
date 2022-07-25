@@ -1,6 +1,8 @@
 pub use super::*;
 
 mod seed_test {
+  use alloc::format;
+
   pub use super::*;
 
   #[test]
@@ -62,7 +64,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234"),
       Ok(Seed::new(
-        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
+        UserString::try_from("ABCD_abcd_1234").unwrap(),
         DEFAULT_SIZE,
         Some(DEFAULT_TILE_PROBABILITIES) // Could also use None
       ))
@@ -93,7 +95,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9#112233445566778899"),
       Ok(Seed::new(
-        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
+        UserString::try_from("ABCD_abcd_1234").unwrap(),
         Size2D::new_unchecked(6, 9),
         Some(TileProbs::try_from([17, 34, 51, 68, 85, 102, 119, 136, 153]).unwrap())
       ))
@@ -104,7 +106,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9"),
       Ok(Seed::new(
-        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
+        UserString::try_from("ABCD_abcd_1234").unwrap(),
         Size2D::new_unchecked(6, 9),
         None
       ))
@@ -113,24 +115,28 @@ mod seed_test {
   #[test]
   fn test_serializing_a_seed() {
     assert_eq!(
-      &Seed::new(
-        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
-        Size2D::new_unchecked(6, 9),
-        Some(TileProbs::try_from([17, 34, 51, 68, 85, 102, 119, 136, 153]).unwrap())
-      )
-      .to_string(),
+      format!(
+        "{}",
+        Seed::new(
+          UserString::try_from("ABCD_abcd_1234").unwrap(),
+          Size2D::new_unchecked(6, 9),
+          Some(TileProbs::try_from([17, 34, 51, 68, 85, 102, 119, 136, 153]).unwrap())
+        )
+      ),
       "ABCD_abcd_1234#6x9#112233445566778899",
     )
   }
   #[test]
   fn test_serializing_a_seed_no_tile_probs() {
     assert_eq!(
-      &Seed::new(
-        UserString::try_from("ABCD_abcd_1234".to_string()).unwrap(),
-        Size2D::new_unchecked(6, 9),
-        None
-      )
-      .to_string(),
+      format!(
+        "{}",
+        Seed::new(
+          UserString::try_from("ABCD_abcd_1234").unwrap(),
+          Size2D::new_unchecked(6, 9),
+          None
+        )
+      ),
       "ABCD_abcd_1234#6x9",
     )
   }

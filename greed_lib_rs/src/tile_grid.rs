@@ -1,5 +1,10 @@
+use alloc::{fmt, string::String};
+
 use super::{Grid2D, Pos, Size2D, Tile};
-use std::{fmt::Write, iter::FusedIterator};
+use core::{
+  fmt::{Formatter, Write},
+  iter::FusedIterator,
+};
 
 pub trait TileGet<I> {
   fn get(&self, index: I) -> Option<Tile>;
@@ -224,7 +229,7 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + Grid2D {
   /// Implementation for Display that automatially Displays all tiles in the grid
   /// # Errors
   /// If the formatter failed a write.
-  fn display_fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn display_fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     for row in self.rows() {
       for tile in row {
         f.write_char(char::from(tile))?;

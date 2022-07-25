@@ -1,6 +1,6 @@
 use super::{GameStateRebuildFromDiffError, Pos};
-use std::num::TryFromIntError;
-use thiserror::Error;
+use core::num::TryFromIntError;
+use thiserror_no_std::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum PlayableError {

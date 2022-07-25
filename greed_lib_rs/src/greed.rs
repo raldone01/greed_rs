@@ -2,13 +2,10 @@ use super::{
   Amount, Direction, GameField, GameState, GreedParserError, Grid2D, MoveValidationError, Playable,
   PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
-use chrono::{DateTime, Local, TimeZone, Utc};
+use alloc::{format, rc::Rc, string::String, vec::Vec};
+use chrono::{DateTime, Duration, Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use std::{
-  rc::Rc,
-  time::{Duration, Instant},
-};
 
 #[skip_serializing_none]
 #[derive(Clone, Default, Serialize, Deserialize, Debug, PartialEq)]
@@ -50,7 +47,7 @@ impl GameMeta {
       utc_finished_ms,
       time_spent_ms: greed
         .time_spent()
-        .as_millis()
+        .num_milliseconds()
         .try_into()
         .expect("How the hell did you play that long? (Create an issue)"),
       moves: Some(greed.game_state.moves().to_vec()),
@@ -72,7 +69,7 @@ pub struct Greed {
   /// None if the game was loaded from a string with no starting time.
   started_instant: Option<DateTime<Utc>>,
   finished_instant: Option<DateTime<Utc>>,
-  started_session: Instant,
+  started_session: DateTime<Utc>,
   time_spent: Duration,
   undos: usize,
   game_state: GameState,
@@ -85,10 +82,10 @@ impl Greed {
     Greed {
       seed: Some(seed),
       name,
-      started_instant: Some(chrono::Utc::now()),
+      started_instant: Some(Utc::now()),
       finished_instant: None,
-      started_session: Instant::now(),
-      time_spent: Duration::new(0, 0),
+      started_session: Utc::now(),
+      time_spent: Duration::seconds(0),
       undos: 0,
       game_state: GameState::new(game_field),
     }
@@ -156,9 +153,10 @@ impl Greed {
       .name
       .or_else(|| game_meta.seed.as_ref().map(String::from))
       .unwrap_or_else(|| {
-        Local::now()
-          .format("Custom Game from %d/%b/%Y %H:%M:%S")
-          .to_string()
+        format!(
+          "{}",
+          Local::now().format("Custom Game from %d/%b/%Y %H:%M:%S")
+        )
       });
 
     Ok(Self {
@@ -171,13 +169,8 @@ impl Greed {
         .utc_finished_ms
         .and_then(|utc_finished_ms| Utc.timestamp_millis_opt(utc_finished_ms).single()),
 
-      started_session: Instant::now(),
-      time_spent: Duration::from_millis(
-        game_meta
-          .time_spent_ms
-          .try_into()
-          .map_err(|cause| GreedParserError::InvalidDuration { cause })?,
-      ),
+      started_session: Utc::now(),
+      time_spent: Duration::milliseconds(game_meta.time_spent_ms),
       undos: game_meta.undos.unwrap_or(0),
       game_state,
     })
@@ -201,12 +194,12 @@ impl Greed {
   }
 
   #[must_use]
-  pub fn session_time(&self) -> std::time::Duration {
-    Instant::now() - self.started_session
+  pub fn session_time(&self) -> Duration {
+    Utc::now() - self.started_session
   }
 
   #[must_use]
-  pub fn time_spent(&self) -> std::time::Duration {
+  pub fn time_spent(&self) -> Duration {
     self.time_spent + self.session_time()
   }
 

@@ -1,6 +1,6 @@
+use core::fmt::{self, Debug, Display, Formatter};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[derive(Error, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum AmountConversionError {
@@ -14,12 +14,12 @@ pub enum AmountConversionError {
 pub struct Amount(u8);
 
 impl Debug for Amount {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Debug::fmt(&self.0, f)
   }
 }
 impl Display for Amount {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Display::fmt(&self.0, f)
   }
 }

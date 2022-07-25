@@ -1,7 +1,7 @@
 use super::{amount::AmountConversionError, Amount, Tile};
+use core::fmt::{self, Debug, Formatter};
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "u8")]
@@ -63,7 +63,7 @@ impl From<FakeTile> for Tile {
 }
 
 impl Debug for FakeTile {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{:?}", Tile::from(*self))
   }
 }

@@ -2,10 +2,11 @@ use super::{
   FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Grid2D, Pos, Seed, Size2D,
   Tile, TileChooser, TileGet, TileGrid, DEFAULT_SIZE,
 };
+use alloc::{boxed::Box, fmt, format, string::String, vec::Vec};
+use core::fmt::{Debug, Display, Formatter};
 use rand::prelude::*;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha512};
-use std::fmt::{Debug, Display};
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
@@ -117,7 +118,7 @@ impl From<&Seed> for GameField {
 
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
-    game_field.to_string()
+    format!("{}", game_field)
   }
 }
 
@@ -253,7 +254,7 @@ impl TileGet<Pos> for GameField {
 }
 
 impl Display for GameField {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     self.display_fmt(f)
   }
 }

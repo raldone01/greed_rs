@@ -1,3 +1,5 @@
+use alloc::string::String;
+
 use super::{Greed, Seed, Size2D, TileProbs, DEFAULT_SIZE};
 
 #[derive(Clone, PartialEq, Eq)]

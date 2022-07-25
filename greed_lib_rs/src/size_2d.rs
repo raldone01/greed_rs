@@ -1,9 +1,8 @@
 use super::{Grid2D, Pos};
 use arbitrary::Arbitrary;
-use core::fmt;
+use core::{fmt, num::TryFromIntError, ops::RangeInclusive};
 use serde::{Deserialize, Serialize};
-use std::{num::TryFromIntError, ops::RangeInclusive};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]

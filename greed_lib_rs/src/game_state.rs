@@ -2,12 +2,10 @@ use super::{
   Amount, Direction, FakeTile, GameField, Grid2D, Playable, PlayableError, Pos, Size2D, Tile,
   TileGet, TileGrid,
 };
+use alloc::{format, rc::Rc, string::String, vec::Vec};
 use bitvec::prelude as bv;
-use std::{
-  fmt::{Debug, Display},
-  rc::Rc,
-};
-use thiserror::Error;
+use core::fmt::{self, Debug, Display, Formatter};
+use thiserror_no_std::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum GameStateRebuildFromDiffError {
@@ -341,12 +339,12 @@ impl Grid2D for GameState {
 }
 
 impl Display for GameState {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     self.display_fmt(f)
   }
 }
 impl Debug for GameState {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "MASK: ")?;
     let Size2D { x_size, y_size } = self.dimensions();
     for y in 0..y_size {
@@ -367,6 +365,6 @@ impl Debug for GameState {
 
 impl From<&GameState> for String {
   fn from(game_field: &GameState) -> Self {
-    game_field.to_string()
+    format!("{}", game_field)
   }
 }
