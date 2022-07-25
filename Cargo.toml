@@ -2,6 +2,7 @@
 
 members = [
     "greed_rs",
+    "greed_wasm_rs",
     "greed_lib_rs",
     "greed_lib_rs/fuzz",
 ]

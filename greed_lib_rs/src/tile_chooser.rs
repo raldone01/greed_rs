@@ -17,6 +17,6 @@ impl<'rng, 'a, RNG: Rng> TileChooser<'rng, 'a, RNG> {
     let dist = WeightedIndex::new(weights).unwrap();
 
     #[allow(clippy::cast_possible_truncation)] // dist.sample can only produce values <= 9
-    FakeTile::from_unchecked_u8(dist.sample(self.rng) as u8)
+    FakeTile::from_unchecked_u8(dist.sample(self.rng) as u8 + 1)
   }
 }
