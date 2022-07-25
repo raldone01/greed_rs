@@ -140,6 +140,13 @@ mod game_field_test {
   use super::*;
 
   #[test]
+  fn test_empty() {
+    assert_eq!(
+      GameField::try_from(""),
+      Err(GameFieldParserError::NoTrailingNewLine)
+    )
+  }
+  #[test]
   fn test_gen_ff_probs() {
     let seed = Seed::try_from("none#1x1#ffffffffffffffffff").unwrap();
     let _ = GameField::from_seed(&seed);

@@ -10,11 +10,13 @@ use crate::crossterm::run;
 #[cfg(feature = "termion")]
 use crate::termion::run;
 
-use greed_lib_rs::{Direction, Greed, Playable};
+use greed_lib_rs::{Direction, GameField, Greed, Playable};
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
   Direction::from_bits(4);
+
+  let gf = GameField::try_from("");
 
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
 

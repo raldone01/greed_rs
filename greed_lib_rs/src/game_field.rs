@@ -125,6 +125,9 @@ impl TryFrom<&str> for GameField {
   type Error = GameFieldParserError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
+    if value.len() == 0 {
+      return Err(GameFieldParserError::NoTrailingNewLine); // Mabe add a better error
+    }
     let default_size = DEFAULT_SIZE;
     let mut vec = Vec::with_capacity(default_size.tile_count());
 
