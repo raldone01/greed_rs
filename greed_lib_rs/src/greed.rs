@@ -45,11 +45,7 @@ impl GameMeta {
       name: Some(greed.name.clone()),
       utc_started_ms,
       utc_finished_ms,
-      time_spent_ms: greed
-        .time_spent()
-        .num_milliseconds()
-        .try_into()
-        .expect("How the hell did you play that long? (Create an issue)"),
+      time_spent_ms: greed.time_spent().num_milliseconds(),
       moves: Some(greed.game_state.moves().to_vec()),
       score: Some(greed.score()),
       human_score: Some(greed.human_score()),

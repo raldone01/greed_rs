@@ -126,7 +126,7 @@ impl TryFrom<&str> for GameField {
   type Error = GameFieldParserError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    if value.len() == 0 {
+    if value.is_empty() {
       return Err(GameFieldParserError::NoTrailingNewLine); // Mabe add a better error
     }
     let default_size = DEFAULT_SIZE;
