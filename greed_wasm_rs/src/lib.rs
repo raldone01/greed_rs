@@ -85,4 +85,7 @@ impl Game {
       .iter()
       .all(|&dir| self.greed.check_move(dir).is_err())
   }
+  pub fn save(&self) -> String {
+    self.greed.save_to_string()
+  }
 }
