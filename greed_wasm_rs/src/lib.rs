@@ -63,7 +63,7 @@ impl Game {
       7 => Direction::UP.union(Direction::LEFT),
       8 => Direction::UP,
       9 => Direction::UP.union(Direction::RIGHT),
-      _ => unreachable!(),
+      _ => return Ok(()), // Fall through for cases like 0 and 5
     };
     self
       .greed

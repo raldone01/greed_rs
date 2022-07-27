@@ -16,7 +16,6 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         'index.html'
-        //{ from: Path.resolve('./index.html'), to: './index.html' },
       ]
     }),
   ],

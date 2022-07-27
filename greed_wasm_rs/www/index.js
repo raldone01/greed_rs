@@ -40,14 +40,11 @@ document.addEventListener('keydown', (e) => {
 
     if (e.code.startsWith("Numpad")) {
         let num = e.code.slice(6);
-        if (num != 0 && num != 5) {
-            console.log(`move with key ${num}`)
-            try {
-                game.move_numpad(num);
-                redraw();
-            } catch (e) {
-                show_message(`Error: <b>${e}</b>`)
-            }
+        try {
+            game.move_numpad(num);
+            redraw();
+        } catch (e) {
+            show_message(`Error: <b>${e}</b>`)
         }
     } else if (e.code === "KeyU") {
         //console.log("undo move")
@@ -64,7 +61,8 @@ generate();
 
 function show_message(msg) {
     out.innerHTML = msg;
-    reset_timeout.cancel()
+    if (reset_timeout != undefined)
+        clearTimeout(reset_timeout)
     reset_timeout = setTimeout(redraw, 2000);
 }
 
