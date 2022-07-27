@@ -14,8 +14,6 @@ use greed_lib_rs::{Direction, GameField, Greed, Playable};
 
 #[allow(unreachable_code, unused_variables)]
 fn main() {
-  Direction::from_bits(4);
-
   let gf = GameField::try_from("");
 
   let mut greed = Greed::load_from_string("0133@\n11117\n").unwrap();
@@ -47,5 +45,5 @@ fn main() {
   let parsed_greed = Greed::load_from_string(&save_file).unwrap();
   let new_save_file = parsed_greed.save_to_string();
   println!("New save File:\n{}", new_save_file);
-  assert_eq!(save_file, new_save_file)
+  assert_eq!(save_file, new_save_file);
 }

@@ -25,7 +25,7 @@ impl<'a> IntoIterator for &'a TileProbs {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum TileProbsConversionError {
   #[error("Empty Tile Probabilities Field")]
   Empty,

@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
 #[skip_serializing_none]
-#[derive(Clone, Default, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Clone, Default, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct GameMeta {
   pub file_version: Option<u64>,
   pub greed_version: Option<u64>,
@@ -56,7 +56,7 @@ impl GameMeta {
   }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Greed {
   /// None if the game is custom game and the seed is unkown.
   seed: Option<Seed>,

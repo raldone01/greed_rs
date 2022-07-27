@@ -45,7 +45,7 @@ mod seed_test {
       Seed::try_from("ABCD_abcd_1234#ffffffffffffffffx2#112233445566778899#1212312"),
       Err(SeedConversionError::InvalidDimension {
         cause: Size2DConversionError::SizeOutOfRange {
-          actual_size: 18446744073709551615
+          actual_size: 18_446_744_073_709_551_615
         }
       })
     )

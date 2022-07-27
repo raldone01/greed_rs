@@ -30,11 +30,13 @@ greed_lib_rs = { path = "../greed_lib_rs" }
 
 # Explicit direct dependency in order to enable js support for random generation
 getrandom = { version = "0.2.7", features = ["js"] }
+# Explicit direct dependency in order to enable js support for getting the current time
 chrono = { version = "0.4.19", features = ["wasmbind"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
 
-[profile.release]
-# Tell `rustc` to optimize for small code size.
-opt-level = "s"
+# [profile.release] # TODO
+# # Tell `rustc` to optimize for small code size.
+# opt-level = "s"
+# strip = "symbols"

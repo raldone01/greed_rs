@@ -93,7 +93,7 @@ impl TryFrom<(usize, usize)> for Size2D {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum Size2DConversionError {
   #[error("Invalid Dimensions Format")] // Maybe split into multiple Errors
   InvalidFormat,

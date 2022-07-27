@@ -24,7 +24,7 @@ impl FakeTile {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum FakeTileConversionError {
   #[error("Can't convert player Tile to FakeTile")]
   PlayerTile,

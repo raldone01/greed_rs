@@ -7,7 +7,7 @@ use bitvec::prelude as bv;
 use core::fmt::{self, Debug, Display, Formatter};
 use thiserror_no_std::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameStateRebuildFromDiffError {
   #[error(
     "Tiles don't match at {} - inital tile: {}; last tile {}",

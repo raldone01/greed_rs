@@ -9,7 +9,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 use thiserror_no_std::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum UserStringError {
   #[error("Unexpected char {char} these are valid: 'A-Za-z0-9_'")]
   InvalidCharacter { char: char },
@@ -17,7 +17,7 @@ pub enum UserStringError {
   Empty,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum SeedConversionError {
   #[error("Invalid User String")]
   UserStringError { cause: UserStringError },

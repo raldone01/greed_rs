@@ -2,7 +2,7 @@ use super::{GameStateRebuildFromDiffError, Pos};
 use core::num::TryFromIntError;
 use thiserror_no_std::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum PlayableError {
   #[error("Invalid direction")]
   InvalidDirection,
@@ -12,7 +12,7 @@ pub enum PlayableError {
   UndoInvalidMove,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameFieldParserError {
   #[error("Player not found on the game field")]
   PlayerNotFound,
@@ -30,7 +30,7 @@ pub enum GameFieldParserError {
   InvalidSize,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 #[error("Invalid character ({found})")]
 pub struct TileParseError {
   pub found: char,
@@ -91,13 +91,13 @@ impl From<PlayableError> for GreedParserError {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum MoveValidationError {
   #[error("Move {move_number} is invalid")]
   InvalidMove { move_number: usize },
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum ReproductionError {
   #[error("Invalid move")]
   MoveValidationError { cause: MoveValidationError },

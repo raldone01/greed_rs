@@ -51,8 +51,7 @@ impl Game {
     self
       .greed
       .seed()
-      .map(String::from)
-      .unwrap_or_else(|| "No Seed".into())
+      .map_or_else(|| "No Seed".into(), String::from)
   }
   pub fn move_numpad(&mut self, key: u8) -> Result<(), String> {
     let dir = match key {
