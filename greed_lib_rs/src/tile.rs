@@ -84,14 +84,12 @@ impl Tile {
 
 impl From<Tile> for char {
   fn from(tile: Tile) -> Self {
-    match tile {
-      Tile::Player => '@',
-      // V0 => ' ', Handled in the display function
-      // x if let Some(amount) = self.amount() => { Ok(()) } Unstable damn
-      _ => tile
-        .amount()
-        .map(|a| char::from_digit(u32::from(a), 10).unwrap())
-        .unwrap(),
+    if let Some(amount) = tile.amount() {
+      char::from_digit(u32::from(amount), 10).unwrap()
+    } else {
+      debug_assert_eq!(tile, Tile::Player);
+      // since .amount() failed we must have a player tile, debug assert to make sure added tile types don't silently do something wrong
+      '@'
     }
   }
 }
