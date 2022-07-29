@@ -11,15 +11,15 @@ pub struct FakeTile {
 }
 
 impl FakeTile {
-  pub const EMTPY: FakeTile = FakeTile { amount: 0 };
+  pub const EMTPY: Self = Self { amount: 0 };
 
-  pub fn amount(self) -> u8 {
+  pub const fn amount(self) -> u8 {
     self.amount
   }
-  pub fn from_unchecked(tile: Tile) -> FakeTile {
+  pub const fn from_unchecked(tile: Tile) -> Self {
     Self { amount: tile as u8 }
   }
-  pub fn from_unchecked_u8(tile: u8) -> FakeTile {
+  pub const fn from_unchecked_u8(tile: u8) -> Self {
     Self { amount: tile }
   }
 }
@@ -51,13 +51,13 @@ impl TryFrom<Tile> for FakeTile {
 
   fn try_from(value: Tile) -> Result<Self, Self::Error> {
     let amount = value.amount().ok_or(FakeTileConversionError::PlayerTile)?;
-    Ok(FakeTile { amount })
+    Ok(Self { amount })
   }
 }
 
 impl From<FakeTile> for Tile {
   fn from(fake_tile: FakeTile) -> Self {
-    Tile::try_from(fake_tile.amount)
+    Self::try_from(fake_tile.amount)
       .expect("fake_tile.ammount is at always <= 9 therefore Tile::try_from can never fail")
   }
 }

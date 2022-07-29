@@ -1,6 +1,6 @@
 use alloc::string::String;
 
-use super::{Greed, Seed, Size2D, TileProbs, DEFAULT_SIZE};
+use super::{Greed, Seed, Size2D, TileProbs};
 
 #[derive(Clone, PartialEq, Eq)]
 #[must_use]
@@ -9,7 +9,7 @@ pub struct GreedBuilder {
 }
 
 impl GreedBuilder {
-  pub fn new() -> Self {
+  pub const fn new() -> Self {
     Self { name: None }
   }
 
@@ -84,7 +84,7 @@ pub struct SizeProbGreedBuilder {
 }
 impl SizeProbGreedBuilder {
   pub fn build(self) -> Greed {
-    let size = self.size.unwrap_or(DEFAULT_SIZE);
+    let size = self.size.unwrap_or(Size2D::DEFAULT_SIZE);
 
     let seed = Seed::new_random(size, self.tile_probs);
     SeedGreedBuilder {

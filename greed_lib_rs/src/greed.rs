@@ -93,7 +93,7 @@ impl Greed {
   }
 
   #[must_use]
-  pub fn seed(&self) -> Option<&Seed> {
+  pub const fn seed(&self) -> Option<&Seed> {
     self.seed.as_ref()
   }
 

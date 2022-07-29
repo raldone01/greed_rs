@@ -28,7 +28,7 @@ pub fn set_panic_hook() {
 #[wasm_bindgen]
 impl Game {
   pub fn from_string(value: &str) -> Result<Game, String> {
-    Ok(Game {
+    Ok(Self {
       greed: Greed::load_from_string(value).map_err(|err| err.to_string())?,
     })
   }
@@ -40,7 +40,7 @@ impl Game {
       let seed = UserString::try_from(seed).map_err(|_| "Invalid Seed")?;
       Seed::new(seed, size, None)
     };
-    Ok(Game {
+    Ok(Self {
       greed: GreedBuilder::new().seed(seed).build(),
     })
   }
@@ -80,7 +80,7 @@ impl Game {
       .map_err(|err| err.to_string())
   }
   pub fn is_stuck(&mut self) -> bool {
-    Direction::all_directions_cw()
+    Direction::ALL_DIRECTIONS_CW
       .iter()
       .all(|&dir| self.greed.check_move(dir).is_err())
   }

@@ -6,7 +6,9 @@ type Inner = [u8; 9];
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TileProbs(Inner);
 
-pub const DEFAULT_TILE_PROBABILITIES: TileProbs = TileProbs([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+impl TileProbs {
+  pub const DEFAULT_TILE_PROBABILITIES: TileProbs = TileProbs([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+}
 
 impl IntoIterator for TileProbs {
   type Item = <Inner as IntoIterator>::Item;
@@ -58,7 +60,7 @@ impl TryFrom<&str> for TileProbs {
       *val =
         u8::from_str_radix(val_slice, 16).map_err(|_| TileProbsConversionError::InvalidFormat)?;
     }
-    TileProbs::try_from(vals)
+    Self::try_from(vals)
   }
 }
 impl From<TileProbs> for Inner {

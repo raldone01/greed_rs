@@ -17,27 +17,37 @@ bitflags! {
 }
 
 impl Direction {
+  pub const ALL_DIRECTIONS_CW: [Self; 8] = [
+    Self::UP,
+    Self::UP.union(Self::RIGHT),
+    Self::RIGHT,
+    Self::RIGHT.union(Self::DOWN),
+    Self::DOWN,
+    Self::DOWN.union(Self::LEFT),
+    Self::LEFT,
+    Self::LEFT.union(Self::UP),
+  ];
   /// Checks if a direction is valid.
   /// A valid direction must actually change position when moved.
   /// thereby `0`, `UP | DOWN`, `LEFT | RIGHT` and  `LEFT | RIGHT | UP | DOWN` are invalid
   #[must_use]
-  pub fn is_valid(self) -> bool {
+  pub const fn is_valid(self) -> bool {
     // Previous Impl:
     //  let invalid = self.reduce().is_empty();
     //  !invalid
 
-    (self.contains(Direction::UP) ^ self.contains(Direction::DOWN))
-      | (self.contains(Direction::LEFT) ^ self.contains(Direction::RIGHT))
+    (self.contains(Self::UP) ^ self.contains(Self::DOWN))
+      | (self.contains(Self::LEFT) ^ self.contains(Self::RIGHT))
   }
 
   /// disambiguates a direction
   #[must_use]
   pub fn reduce(mut self) -> Self {
-    if self.contains(Direction::UP | Direction::DOWN) {
-      self ^= Direction::UP | Direction::DOWN;
+    if self.contains(Self::UP | Self::DOWN) {
+      self ^= Self::UP | Self::DOWN;
     }
-    if self.contains(Direction::LEFT | Direction::RIGHT) {
-      self ^= Direction::RIGHT | Direction::LEFT;
+    if self.contains(Self::LEFT | Self::RIGHT) {
+      self ^= Self::RIGHT | Self::LEFT;
     }
     self
   }
@@ -46,32 +56,6 @@ impl Direction {
   #[must_use]
   pub fn reverse(self) -> Self {
     !self
-  }
-
-  #[must_use]
-  pub fn all_directions_cw() -> &'static [Direction; 8] {
-    /* static DIRS: [Direction; 8] = [
-      Direction::UP,
-      Direction::UP | Direction::RIGHT,
-      Direction::RIGHT,
-      Direction::RIGHT | Direction::DOWN,
-      Direction::DOWN,
-      Direction::DOWN | Direction::LEFT,
-      Direction::LEFT,
-      Direction::LEFT | Direction::UP,
-    ]; */
-    // REVISIT: Once rust has support for const impl and bitflags updates to support const |
-    static DIRS: [Direction; 8] = [
-      Direction::UP,
-      Direction::UP.union(Direction::RIGHT),
-      Direction::RIGHT,
-      Direction::RIGHT.union(Direction::DOWN),
-      Direction::DOWN,
-      Direction::DOWN.union(Direction::LEFT),
-      Direction::LEFT,
-      Direction::LEFT.union(Direction::UP),
-    ];
-    &DIRS
   }
 }
 
@@ -87,7 +71,7 @@ where
 }
 
 impl Neg for Direction {
-  type Output = Direction;
+  type Output = Self;
 
   fn neg(self) -> Self::Output {
     !self
@@ -97,21 +81,21 @@ impl Neg for Direction {
 impl fmt::Display for Direction {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let dir = self.reduce();
-    let str = if dir == Direction::UP {
+    let str = if dir == Self::UP {
       "UP"
-    } else if dir == Direction::DOWN {
+    } else if dir == Self::DOWN {
       "DOWN"
-    } else if dir == Direction::LEFT {
+    } else if dir == Self::LEFT {
       "LEFT"
-    } else if dir == Direction::RIGHT {
+    } else if dir == Self::RIGHT {
       "RIGHT"
-    } else if dir == Direction::UP | Direction::RIGHT {
+    } else if dir == Self::UP | Self::RIGHT {
       "UP_RIGHT"
-    } else if dir == Direction::RIGHT | Direction::DOWN {
+    } else if dir == Self::RIGHT | Self::DOWN {
       "DOWN_RIGHT"
-    } else if dir == Direction::DOWN | Direction::LEFT {
+    } else if dir == Self::DOWN | Self::LEFT {
       "DOWN_LEFT"
-    } else if dir == Direction::LEFT | Direction::UP {
+    } else if dir == Self::LEFT | Self::UP {
       "UP_LEFT"
     } else {
       "None"
@@ -134,7 +118,7 @@ impl<'de> Deserialize<'de> for Direction {
   where
     D: Deserializer<'de>,
   {
-    Direction::from_bits(u8::deserialize(deserializer)?)
+    Self::from_bits(u8::deserialize(deserializer)?)
       .ok_or_else(|| de::Error::custom("Invalid direction"))
   }
 }

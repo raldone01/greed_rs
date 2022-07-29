@@ -24,7 +24,7 @@ pub trait Playable {
   fn game_field(&self) -> &GameField;
   fn move_count(&self) -> usize;
   fn is_game_complete(&self) -> bool {
-    for &dir in Direction::all_directions_cw() {
+    for dir in Direction::ALL_DIRECTIONS_CW {
       if self.check_move(dir) != Err(PlayableError::BadMove) {
         return false;
       }

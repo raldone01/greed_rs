@@ -26,11 +26,11 @@ impl Display for Amount {
 
 impl Amount {
   #[must_use]
-  pub fn amount(self) -> u8 {
+  pub const fn amount(self) -> u8 {
     self.0
   }
   #[must_use]
-  pub(super) fn new_unchecked(val: u8) -> Self {
+  pub(super) const fn new_unchecked(val: u8) -> Self {
     Self(val)
   }
 }

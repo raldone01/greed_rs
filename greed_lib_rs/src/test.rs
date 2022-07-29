@@ -65,8 +65,8 @@ mod seed_test {
       Seed::try_from("ABCD_abcd_1234"),
       Ok(Seed::new(
         UserString::try_from("ABCD_abcd_1234").unwrap(),
-        DEFAULT_SIZE,
-        Some(DEFAULT_TILE_PROBABILITIES) // Could also use None
+        Size2D::DEFAULT_SIZE,
+        Some(TileProbs::DEFAULT_TILE_PROBABILITIES) // Could also use None
       ))
     )
   }

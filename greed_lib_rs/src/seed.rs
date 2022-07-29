@@ -1,7 +1,4 @@
-use super::{
-  Size2D, Size2DConversionError, TileProbs, TileProbsConversionError, DEFAULT_SIZE,
-  DEFAULT_TILE_PROBABILITIES,
-};
+use super::{Size2D, Size2DConversionError, TileProbs, TileProbsConversionError};
 use alloc::{fmt, format, string::String};
 use arbitrary::Arbitrary;
 use core::fmt::{Debug, Display, Formatter, Write};
@@ -35,19 +32,19 @@ pub enum SeedConversionError {
 
 impl From<UserStringError> for SeedConversionError {
   fn from(cause: UserStringError) -> Self {
-    SeedConversionError::UserStringError { cause }
+    Self::UserStringError { cause }
   }
 }
 
 impl From<Size2DConversionError> for SeedConversionError {
   fn from(cause: Size2DConversionError) -> Self {
-    SeedConversionError::InvalidDimension { cause }
+    Self::InvalidDimension { cause }
   }
 }
 
 impl From<TileProbsConversionError> for SeedConversionError {
   fn from(cause: TileProbsConversionError) -> Self {
-    SeedConversionError::InvalidProbabilities { cause }
+    Self::InvalidProbabilities { cause }
   }
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -162,7 +159,7 @@ impl Seed {
   /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new(user_str: UserString, size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
-      tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
+      tile_probabilities: tile_probabilities.unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES),
       size,
       user_str,
     }
@@ -170,7 +167,7 @@ impl Seed {
   /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new_random(size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
-      tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
+      tile_probabilities: tile_probabilities.unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES),
       size,
       user_str: UserString::new_random(),
     }
@@ -180,11 +177,11 @@ impl Seed {
     &self.user_str.0
   }
   #[must_use]
-  pub fn size(&self) -> Size2D {
+  pub const fn size(&self) -> Size2D {
     self.size
   }
   #[must_use]
-  pub fn tile_probabilities(&self) -> &TileProbs {
+  pub const fn tile_probabilities(&self) -> &TileProbs {
     &self.tile_probabilities
   }
   fn partial_verify(value: &str) -> Result<(&str, Size2D, TileProbs), SeedConversionError> {
@@ -197,13 +194,13 @@ impl Seed {
       .next()
       .map(Size2D::try_from)
       .transpose()?
-      .unwrap_or(DEFAULT_SIZE);
+      .unwrap_or(Size2D::DEFAULT_SIZE);
     let tile_probabilities_slice = parts.next();
 
     let tile_probabilities = tile_probabilities_slice
       .map(TileProbs::try_from)
       .transpose()?
-      .unwrap_or(DEFAULT_TILE_PROBABILITIES);
+      .unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES);
 
     if parts.next().is_some() {
       return Err(SeedConversionError::UnexpectedHashTag);
@@ -220,7 +217,7 @@ impl Display for Seed {
       tile_probabilities,
     } = self;
     write!(f, "{user_str}#{x_size:x}x{y_size:x}")?;
-    if *tile_probabilities != DEFAULT_TILE_PROBABILITIES {
+    if *tile_probabilities != TileProbs::DEFAULT_TILE_PROBABILITIES {
       f.write_char('#')?;
       for prob in tile_probabilities {
         write!(f, "{prob:02x}")?;

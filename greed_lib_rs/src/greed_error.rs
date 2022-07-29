@@ -55,30 +55,6 @@ pub enum GreedParserError {
   #[error("Failed to rebuild game state from initial_game_field and moves array")]
   GameStateRebuildFromMovesError { cause: PlayableError },
 }
-impl PartialEq for GreedParserError {
-  fn eq(&self, other: &Self) -> bool {
-    match (self, other) {
-      (Self::InvalidMetaDataFromat { cause: _ }, Self::InvalidMetaDataFromat { cause: _ }) => true, // do not compare tha cause in this case as this is not implemented in serde_json
-      (Self::InvalidDuration { cause: l_cause }, Self::InvalidDuration { cause: r_cause }) => {
-        l_cause == r_cause
-      },
-      (
-        Self::GameFieldParserError { cause: l_cause },
-        Self::GameFieldParserError { cause: r_cause },
-      ) => l_cause == r_cause,
-      (
-        Self::GameStateRebuildFromDiffError { cause: l_cause },
-        Self::GameStateRebuildFromDiffError { cause: r_cause },
-      ) => l_cause == r_cause,
-      (
-        Self::GameStateRebuildFromMovesError { cause: l_cause },
-        Self::GameStateRebuildFromMovesError { cause: r_cause },
-      ) => l_cause == r_cause,
-      _ => core::mem::discriminant(self) == core::mem::discriminant(other),
-    }
-  }
-}
-
 impl From<GameStateRebuildFromDiffError> for GreedParserError {
   fn from(cause: GameStateRebuildFromDiffError) -> Self {
     GreedParserError::GameStateRebuildFromDiffError { cause }

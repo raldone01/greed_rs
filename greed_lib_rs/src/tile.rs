@@ -85,7 +85,7 @@ impl Tile {
 impl From<Tile> for char {
   fn from(tile: Tile) -> Self {
     if let Some(amount) = tile.amount() {
-      char::from_digit(u32::from(amount), 10).unwrap()
+      Self::from_digit(u32::from(amount), 10).unwrap()
     } else {
       debug_assert_eq!(tile, Tile::Player);
       // since .amount() failed we must have a player tile, debug assert to make sure added tile types don't silently do something wrong
@@ -99,12 +99,12 @@ impl TryFrom<char> for Tile {
 
   fn try_from(value: char) -> Result<Self, Self::Error> {
     match value {
-      '@' => Ok(Tile::Player),
-      ' ' => Ok(Tile::V0),
+      '@' => Ok(Self::Player),
+      ' ' => Ok(Self::V0),
       #[allow(clippy::cast_possible_truncation)] // Always is <= 9
       c => c
         .to_digit(10)
-        .map(|num| Tile::try_from(num as u8).unwrap())
+        .map(|num| Self::try_from(num as u8).unwrap())
         .ok_or(TileParseError { found: c }),
     }
   }
