@@ -17,36 +17,28 @@ pub enum UserStringError {
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum SeedConversionError {
   #[error("Invalid User String")]
-  UserStringError { cause: UserStringError },
+  UserStringError {
+    #[from]
+    source: UserStringError,
+  },
   #[error("Empty string")]
   EmptyString,
   #[error("Dimension format error expected: <x_size>x<y_size>")]
-  InvalidDimension { cause: Size2DConversionError },
+  InvalidDimension {
+    #[from]
+    source: Size2DConversionError,
+  },
   #[error("Invalid probabilities")]
-  InvalidProbabilities { cause: TileProbsConversionError },
+  InvalidProbabilities {
+    #[from]
+    source: TileProbsConversionError,
+  },
   #[error("Unexpected hash tag")]
   UnexpectedHashTag,
   #[error("Unexpected end of the Seed")]
   UnexpectedEndOfSeed,
 }
 
-impl From<UserStringError> for SeedConversionError {
-  fn from(cause: UserStringError) -> Self {
-    Self::UserStringError { cause }
-  }
-}
-
-impl From<Size2DConversionError> for SeedConversionError {
-  fn from(cause: Size2DConversionError) -> Self {
-    Self::InvalidDimension { cause }
-  }
-}
-
-impl From<TileProbsConversionError> for SeedConversionError {
-  fn from(cause: TileProbsConversionError) -> Self {
-    Self::InvalidProbabilities { cause }
-  }
-}
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 pub struct UserString(String);

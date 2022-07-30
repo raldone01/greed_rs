@@ -110,14 +110,11 @@ impl Greed {
     let first_char = str.chars().nth(0).ok_or(GreedParserError::EmptyString)?;
     let game_meta = if first_char == '{' {
       serde_json::from_str::<GameMeta>(str)
-        .map_err(|cause| GreedParserError::InvalidMetaDataFromat { cause })?
+        .map_err(|err| GreedParserError::InvalidMetaDataFromat { source: err.into() })?
     } else {
       // Create default game_meta and set initial_field
       GameMeta {
-        initial_game_field: Some(
-          GameField::try_from(str)
-            .map_err(|cause| GreedParserError::GameFieldParserError { cause })?,
-        ),
+        initial_game_field: Some(GameField::try_from(str)?),
         ..Default::default()
       }
     };

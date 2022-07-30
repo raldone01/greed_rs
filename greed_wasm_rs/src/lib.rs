@@ -29,15 +29,15 @@ pub fn set_panic_hook() {
 impl Game {
   pub fn from_string(value: &str) -> Result<Game, String> {
     Ok(Self {
-      greed: Greed::load_from_string(value).map_err(|err| err.to_string())?,
+      greed: Greed::load_from_string(value).map_err(|err| format!("{err}"))?,
     })
   }
   pub fn generate(x_size: usize, y_size: usize, seed: &str) -> Result<Game, String> {
-    let size = Size2D::new(x_size, y_size).map_err(|_| "Invalid Size")?;
+    let size = Size2D::new(x_size, y_size).map_err(|err| format!("{err:?}"))?;
     let seed = if seed.is_empty() {
       Seed::new_random(size, None)
     } else {
-      let seed = UserString::try_from(seed).map_err(|_| "Invalid Seed")?;
+      let seed = UserString::try_from(seed).map_err(|err| format!("{err:?}"))?;
       Seed::new(seed, size, None)
     };
     Ok(Self {

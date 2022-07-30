@@ -18,13 +18,13 @@ let reset_timeout = undefined;
 load.onchange = (e) => {
     e.target.files[0].text().then((text) => {
         try {
-            game = Game.from_string(text);
-            out.innerHTML = `current seed: <b>${game.seed()}</b>`;
+            let new_game = Game.from_string(text);
+            out.innerHTML = `current seed: <b>${new_game.seed()}</b>`;
+            game = new_game;
+            redraw();
         } catch (e) {
-            out.innerHTML = `Error: <b>${e}</b>`;
-            game = undefined;
+            show_message(`Error: <b>${e}</b>`)
         }
-        redraw();
     })
 };
 

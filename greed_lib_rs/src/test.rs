@@ -16,38 +16,33 @@ mod seed_test {
   fn test_seed_size_zero_x() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#0x9#112233445566778899#1212312"),
-      Err(SeedConversionError::InvalidDimension {
-        cause: Size2DConversionError::ZeroSize
-      })
+      Err(Size2DConversionError::ZeroSize.into())
     )
   }
   #[test]
   fn test_seed_size_zero_y() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x0#112233445566778899#1212312"),
-      Err(SeedConversionError::InvalidDimension {
-        cause: Size2DConversionError::ZeroSize
-      })
+      Err(Size2DConversionError::ZeroSize.into())
     )
   }
   #[test]
   fn test_seed_size_zero_both() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#0x0#112233445566778899#1212312"),
-      Err(SeedConversionError::InvalidDimension {
-        cause: Size2DConversionError::ZeroSize
-      })
+      Err(Size2DConversionError::ZeroSize.into())
     )
   }
   #[test]
   fn test_seed_size_large() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#ffffffffffffffffx2#112233445566778899#1212312"),
-      Err(SeedConversionError::InvalidDimension {
-        cause: Size2DConversionError::SizeOutOfRange {
+      Err(
+        Size2DConversionError::SizeOutOfRange {
           actual_size: 18_446_744_073_709_551_615
         }
-      })
+        .into()
+      )
     )
   }
   #[test]
@@ -55,7 +50,7 @@ mod seed_test {
     assert_eq!(
       Seed::try_from("#12x12"),
       Err(SeedConversionError::UserStringError {
-        cause: UserStringError::Empty
+        source: UserStringError::Empty
       })
     )
   }
@@ -74,9 +69,7 @@ mod seed_test {
   fn test_seed_only_probs() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#112233445566778899"),
-      Err(SeedConversionError::InvalidDimension {
-        cause: Size2DConversionError::InvalidFormat
-      })
+      Err(Size2DConversionError::InvalidFormat.into())
     )
   }
 
@@ -84,9 +77,7 @@ mod seed_test {
   fn test_probs_all_zero() {
     assert_eq!(
       Seed::try_from("ABCD_abcd_1234#6x9#000000000000000000"),
-      Err(SeedConversionError::InvalidProbabilities {
-        cause: TileProbsConversionError::AllZeros
-      })
+      Err(TileProbsConversionError::AllZeros.into())
     )
   }
 
@@ -191,5 +182,36 @@ mod greed_test {
     let _ =
       Greed::load_from_string("{\"utc_finished_ms\":200000000000000000, \"seed\":\"e\"}").unwrap();
     // For now only verify that the Greed doesn't panic or error out
+  }
+
+  #[test]
+  fn test_empty_str() {
+    assert_eq!(
+      Greed::load_from_string(""),
+      Err(GreedParserError::EmptyString)
+    )
+  }
+  #[test]
+  fn test_invalid_json() {
+    if let Err(GreedParserError::InvalidMetaDataFromat { .. }) = Greed::load_from_string("{?}") {
+    } else {
+      assert!(false)
+    }
+  }
+  #[test]
+  fn test_no_gf_information() {
+    assert_eq!(
+      Greed::load_from_string("{}"),
+      Err(GreedParserError::MissingGameFieldInformation)
+    )
+  }
+  #[test]
+  fn test_invalid_game_field() {
+    assert_eq!(
+      Greed::load_from_string("123"),
+      Err(GreedParserError::GameFieldParserError {
+        source: GameFieldParserError::NoTrailingNewLine
+      })
+    )
   }
 }
