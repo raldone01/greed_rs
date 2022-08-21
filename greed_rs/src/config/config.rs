@@ -17,3 +17,7 @@ pub struct Config {
   config_dir: std::path::PathBuf,
   base_theme: Theme,
 }
+
+pub struct SmartConfig {
+  
+}
