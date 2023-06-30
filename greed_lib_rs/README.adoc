@@ -1,0 +1,4 @@
+= greed_lib_rs
+
+== Fuzzing
+Setup using `cargo install cargo-fuzz`.

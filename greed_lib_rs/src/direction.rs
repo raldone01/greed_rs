@@ -135,19 +135,35 @@ impl Serialize for Direction {
 
 struct DirectionVisitor;
 
+macro_rules! impl_visit {
+  ($ident:ident, $ty:ty) => {
+    fn $ident<E>(self, v: $ty) -> Result<Self::Value, E>
+    where
+      E: de::Error,
+    {
+      let v = u8::try_from(v).map_err(|_| E::custom("Invalid direction"))?;
+      Direction::from_bits(v).ok_or_else(|| E::custom("Invalid direction"))
+    }
+  };
+}
+
 impl<'de> Visitor<'de> for DirectionVisitor {
   type Value = Direction;
 
   fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-    formatter.write_str("u8 from 0..=15")
+    formatter.write_str("an u8 from 0..=15")
   }
 
-  fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
-  where
-    E: de::Error,
-  {
-    Direction::from_bits(v).ok_or_else(|| E::custom("Invalid direction"))
-  }
+  impl_visit!(visit_u8, u8);
+  impl_visit!(visit_u16, u16);
+  impl_visit!(visit_u32, u32);
+  impl_visit!(visit_u64, u64);
+  impl_visit!(visit_u128, u128);
+  impl_visit!(visit_i8, i8);
+  impl_visit!(visit_i16, i16);
+  impl_visit!(visit_i32, i32);
+  impl_visit!(visit_i64, i64);
+  impl_visit!(visit_i128, i128);
 }
 
 impl<'de> Deserialize<'de> for Direction {

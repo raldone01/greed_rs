@@ -1,7 +1,3 @@
 [workspace]
-
-members = [
-    "greed_rs",
-    "greed_lib_rs",
-    "greed_lib_rs/fuzz",
-]
+resolver = "2"
+members = ["greed_rs", "greed_lib_rs", "greed_lib_rs/fuzz"]
