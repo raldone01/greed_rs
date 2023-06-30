@@ -1,14 +1,12 @@
-use super::{
-  Size2D, Size2DConversionError, TileProbs, TileProbsConversionError, DEFAULT_SIZE,
-  DEFAULT_TILE_PROBABILITIES,
-};
+use super::{Size2D, Size2DConversionError, TileProbs, TileProbsConversionError};
+use alloc::{fmt, format, string::String};
 use arbitrary::Arbitrary;
+use core::fmt::{Debug, Display, Formatter, Write};
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display, Write};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum UserStringError {
   #[error("Unexpected char {char} these are valid: 'A-Za-z0-9_'")]
   InvalidCharacter { char: char },
@@ -16,40 +14,33 @@ pub enum UserStringError {
   Empty,
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum SeedConversionError {
   #[error("Invalid User String")]
-  UserStringError { cause: UserStringError },
+  UserStringError {
+    #[from]
+    source: UserStringError,
+  },
   #[error("Empty string")]
   EmptyString,
   #[error("Dimension format error expected: <x_size>x<y_size>")]
-  InvalidDimension { cause: Size2DConversionError },
+  InvalidDimension {
+    #[from]
+    source: Size2DConversionError,
+  },
   #[error("Invalid probabilities")]
-  InvalidProbabilities { cause: TileProbsConversionError },
+  InvalidProbabilities {
+    #[from]
+    source: TileProbsConversionError,
+  },
   #[error("Unexpected hash tag")]
   UnexpectedHashTag,
   #[error("Unexpected end of the Seed")]
   UnexpectedEndOfSeed,
 }
 
-impl From<UserStringError> for SeedConversionError {
-  fn from(cause: UserStringError) -> Self {
-    SeedConversionError::UserStringError { cause }
-  }
-}
-
-impl From<Size2DConversionError> for SeedConversionError {
-  fn from(cause: Size2DConversionError) -> Self {
-    SeedConversionError::InvalidDimension { cause }
-  }
-}
-
-impl From<TileProbsConversionError> for SeedConversionError {
-  fn from(cause: TileProbsConversionError) -> Self {
-    SeedConversionError::InvalidProbabilities { cause }
-  }
-}
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[must_use]
 pub struct UserString(String);
 
 impl UserString {
@@ -68,7 +59,11 @@ impl UserString {
       })
   }
   const RANDOM_USER_STRING_LENGTH: usize = 16;
+
+  // TODO: maybe use lazy static to generate all valid chars and pick from them
   const RANDOM_USER_STRING_DISTRIBUTION: Alphanumeric = Alphanumeric;
+
+  #[must_use]
   pub fn as_str(&self) -> &str {
     &self.0[..]
   }
@@ -85,7 +80,7 @@ impl UserString {
 
 impl From<UserString> for String {
   fn from(user_str: UserString) -> Self {
-    user_str.to_string()
+    format!("{user_str}")
   }
 }
 impl TryFrom<String> for UserString {
@@ -96,8 +91,16 @@ impl TryFrom<String> for UserString {
     Ok(Self(user_str))
   }
 }
+impl TryFrom<&str> for UserString {
+  type Error = UserStringError;
+
+  fn try_from(user_str: &str) -> Result<Self, Self::Error> {
+    Self::validate_user_string(user_str)?;
+    Ok(Self(String::from(user_str)))
+  }
+}
 impl Display for UserString {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Display::fmt(&self.0, f)
   }
 }
@@ -118,16 +121,16 @@ impl<'a> Arbitrary<'a> for UserString {
 
 /// # Seed format yummy:
 ///
-/// The seed encodes the user_str, the dimensions and optionally the probabilities for all tiles.
-/// The dimensions and probabilies are encoded as ~upper_alternating_case~ hex.
+/// The seed encodes the `user_str` and optionally the `size` and the `tile_probabilities` for all tiles.
+/// The dimensions and probabilies are encoded as ~`upper_alternating_case`~ hex.
 ///
-/// \# is used as a separator
+/// `\#` is used as a separator
 ///
-/// <> is a placeholder
+/// `<>` is a placeholder
 ///
-/// [] indicates optional
+/// `[]` indicates optional
 ///
-/// Format: <user_str>[#<x_size>x<y_size>[#112233445566778899]]
+/// Format: `<user_str>[#<x_size>x<y_size>[#112233445566778899]]`
 ///
 /// Representation:
 /// * `user_str: A-Za-z0-9_`
@@ -137,6 +140,7 @@ impl<'a> Arbitrary<'a> for UserString {
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "&str")]
 #[serde(into = "String")]
+#[must_use]
 pub struct Seed {
   tile_probabilities: TileProbs,
   size: Size2D,
@@ -144,29 +148,32 @@ pub struct Seed {
 }
 
 impl Seed {
-  /// tile_probabilities == None uses: `DEFAULT_TILE_PROBABILITIES`
+  /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new(user_str: UserString, size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
-      tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
+      tile_probabilities: tile_probabilities.unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES),
       size,
       user_str,
     }
   }
-  /// tile_probabilities == None uses: `DEFAULT_TILE_PROBABILITIES`
+  /// `tile_probabilities` == None uses: `DEFAULT_TILE_PROBABILITIES`
   pub fn new_random(size: Size2D, tile_probabilities: Option<TileProbs>) -> Self {
     Self {
-      tile_probabilities: tile_probabilities.unwrap_or(DEFAULT_TILE_PROBABILITIES),
+      tile_probabilities: tile_probabilities.unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES),
       size,
       user_str: UserString::new_random(),
     }
   }
+  #[must_use]
   pub fn user_str(&self) -> &str {
     &self.user_str.0
   }
-  pub fn size(&self) -> Size2D {
+  #[must_use]
+  pub const fn size(&self) -> Size2D {
     self.size
   }
-  pub fn tile_probabilities(&self) -> &TileProbs {
+  #[must_use]
+  pub const fn tile_probabilities(&self) -> &TileProbs {
     &self.tile_probabilities
   }
   fn partial_verify(value: &str) -> Result<(&str, Size2D, TileProbs), SeedConversionError> {
@@ -179,13 +186,13 @@ impl Seed {
       .next()
       .map(Size2D::try_from)
       .transpose()?
-      .unwrap_or(DEFAULT_SIZE);
+      .unwrap_or(Size2D::DEFAULT_SIZE);
     let tile_probabilities_slice = parts.next();
 
     let tile_probabilities = tile_probabilities_slice
       .map(TileProbs::try_from)
       .transpose()?
-      .unwrap_or(DEFAULT_TILE_PROBABILITIES);
+      .unwrap_or(TileProbs::DEFAULT_TILE_PROBABILITIES);
 
     if parts.next().is_some() {
       return Err(SeedConversionError::UnexpectedHashTag);
@@ -195,14 +202,14 @@ impl Seed {
 }
 
 impl Display for Seed {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     let Seed {
       size: Size2D { x_size, y_size },
       user_str,
       tile_probabilities,
     } = self;
     write!(f, "{user_str}#{x_size:x}x{y_size:x}")?;
-    if *tile_probabilities != DEFAULT_TILE_PROBABILITIES {
+    if *tile_probabilities != TileProbs::DEFAULT_TILE_PROBABILITIES {
       f.write_char('#')?;
       for prob in tile_probabilities {
         write!(f, "{prob:02x}")?;
@@ -212,19 +219,19 @@ impl Display for Seed {
   }
 }
 impl Debug for Seed {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{self}")
   }
 }
 
 impl From<&Seed> for String {
   fn from(seed: &Seed) -> Self {
-    seed.to_string()
+    format!("{seed}")
   }
 }
 impl From<Seed> for String {
   fn from(seed: Seed) -> Self {
-    seed.to_string()
+    format!("{seed}")
   }
 }
 
@@ -233,7 +240,7 @@ impl TryFrom<&str> for Seed {
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
     let (user_str_slice, size, tile_probabilities) = Self::partial_verify(value)?;
-    let user_str = UserString::try_from(user_str_slice.to_string())?;
+    let user_str = UserString::try_from(String::from(user_str_slice))?;
     Ok(Self {
       tile_probabilities,
       size,

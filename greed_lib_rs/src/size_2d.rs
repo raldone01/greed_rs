@@ -1,9 +1,8 @@
 use super::{Grid2D, Pos};
 use arbitrary::Arbitrary;
-use core::fmt;
+use core::{fmt, num::TryFromIntError, ops::RangeInclusive};
 use serde::{Deserialize, Serialize};
-use std::{num::TryFromIntError, ops::RangeInclusive};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -14,22 +13,41 @@ pub struct Size2D {
   pub y_size: usize,
 }
 
-pub const DEFAULT_SIZE: Size2D = Size2D {
-  x_size: 79,
-  y_size: 21,
-};
-
 impl Size2D {
-  pub(super) fn new_unchecked(x_size: usize, y_size: usize) -> Self {
+  pub const DEFAULT_SIZE: Size2D = Size2D {
+    x_size: 79,
+    y_size: 21,
+  };
+
+  #[cfg(not(fuzz))]
+  pub const MAX_TILE_COUNT: usize = 65536; // Max 64kB (for now) (256 x 265 Grid)
+                                           // Must be smaller than isize::MAX
+
+  #[cfg(fuzz)]
+  pub const MAX_TILE_COUNT: usize = 1024; // Limit the size to 32x32 for fuzzing to speed it up
+
+  pub(super) const fn new_unchecked(x_size: usize, y_size: usize) -> Self {
     Self { x_size, y_size }
   }
+  /// Creates a now `Size2D`, checking if it is actually valid.
+  /// # Errors
+  /// * If any Dimension is zero.
+  /// * The product of the Dimensions overflows.
+  /// * The product of the Dimensions is larger than `MAX_TILE_COUNT`.
   pub fn new(x_size: usize, y_size: usize) -> Result<Self, Size2DConversionError> {
-    if x_size == 0 || y_size == 0 || x_size > isize::MAX as usize || y_size > isize::MAX as usize {
-      return Err(Size2DConversionError::OutOfRange);
+    let (tile_count, overflow) = x_size.overflowing_mul(y_size);
+    if tile_count == 0 {
+      return Err(Size2DConversionError::ZeroSize);
+    }
+    if overflow || tile_count > Self::MAX_TILE_COUNT {
+      return Err(Size2DConversionError::SizeOutOfRange {
+        actual_size: if overflow { usize::MAX } else { tile_count },
+      });
     }
     Ok(Self::new_unchecked(x_size, y_size))
   }
-  pub fn tile_count(&self) -> usize {
+  #[must_use]
+  pub const fn tile_count(&self) -> usize {
     self.x_size * self.y_size
   }
 }
@@ -44,7 +62,7 @@ impl TryFrom<Size2D> for Pos {
   type Error = TryFromIntError;
 
   fn try_from(value: Size2D) -> Result<Self, Self::Error> {
-    Ok(Pos::new(
+    Ok(Self::new(
       isize::try_from(value.x_size)?,
       isize::try_from(value.y_size)?,
     ))
@@ -54,9 +72,9 @@ impl TryFrom<Pos> for Size2D {
   type Error = Size2DConversionError;
 
   fn try_from(value: Pos) -> Result<Self, Self::Error> {
-    Size2D::new(
-      usize::try_from(value.x).map_err(|_| Size2DConversionError::OutOfRange)?,
-      usize::try_from(value.y).map_err(|_| Size2DConversionError::OutOfRange)?,
+    Self::new(
+      usize::try_from(value.x).map_err(|_| Size2DConversionError::Negative)?,
+      usize::try_from(value.y).map_err(|_| Size2DConversionError::Negative)?,
     )
   }
 }
@@ -75,12 +93,19 @@ impl TryFrom<(usize, usize)> for Size2D {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum Size2DConversionError {
   #[error("Invalid Dimensions Format")] // Maybe split into multiple Errors
   InvalidFormat,
-  #[error("Dimension out of range (x_size: 1..={0}, y_size: 1..={0}", isize::MAX)]
-  OutOfRange,
+  #[error(
+    "The size {actual_size} is bigger then the defined limit {}",
+    Size2D::MAX_TILE_COUNT
+  )]
+  SizeOutOfRange { actual_size: usize },
+  #[error("Size with tile_count zero are not allowed")]
+  ZeroSize,
+  #[error("Negative Dimensions are not allowed")]
+  Negative,
 }
 
 impl TryFrom<&str> for Size2D {

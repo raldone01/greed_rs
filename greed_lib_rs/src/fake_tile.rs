@@ -1,7 +1,7 @@
 use super::{amount::AmountConversionError, Amount, Tile};
+use core::fmt::{self, Debug, Formatter};
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "u8")]
@@ -11,20 +11,20 @@ pub struct FakeTile {
 }
 
 impl FakeTile {
-  pub const EMTPY: FakeTile = FakeTile { amount: 0 };
+  pub const EMTPY: Self = Self { amount: 0 };
 
-  pub fn amount(self) -> u8 {
+  pub const fn amount(self) -> u8 {
     self.amount
   }
-  pub fn from_unchecked(tile: Tile) -> FakeTile {
+  pub const fn from_unchecked(tile: Tile) -> Self {
     Self { amount: tile as u8 }
   }
-  pub fn from_unchecked_u8(tile: u8) -> FakeTile {
+  pub const fn from_unchecked_u8(tile: u8) -> Self {
     Self { amount: tile }
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum FakeTileConversionError {
   #[error("Can't convert player Tile to FakeTile")]
   PlayerTile,
@@ -51,19 +51,19 @@ impl TryFrom<Tile> for FakeTile {
 
   fn try_from(value: Tile) -> Result<Self, Self::Error> {
     let amount = value.amount().ok_or(FakeTileConversionError::PlayerTile)?;
-    Ok(FakeTile { amount })
+    Ok(Self { amount })
   }
 }
 
 impl From<FakeTile> for Tile {
   fn from(fake_tile: FakeTile) -> Self {
-    Tile::try_from(fake_tile.amount)
+    Self::try_from(fake_tile.amount)
       .expect("fake_tile.ammount is at always <= 9 therefore Tile::try_from can never fail")
   }
 }
 
 impl Debug for FakeTile {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "{:?}", Tile::from(*self))
   }
 }

@@ -1,7 +1,7 @@
 #![no_main]
 use libfuzzer_sys::fuzz_target;
 
-use greed_lib_rs::{Seed, Size2D, DEFAULT_SIZE};
+use greed_lib_rs::{Seed, Size2D};
 use std::convert::TryFrom;
 
 fuzz_target!(|data: &str| {
@@ -16,14 +16,13 @@ fuzz_target!(|data: &str| {
 
     let size_data = split_data
       .next()
-      .map(Size2D::try_from)
-      .unwrap_or(Ok(DEFAULT_SIZE))
+      .map_or(Ok(Size2D::DEFAULT_SIZE), Size2D::try_from)
       .unwrap();
     let size_seed = split_seed.next().map(Size2D::try_from).unwrap().unwrap();
     assert_eq!(size_data, size_seed);
 
-    let tile_probs_data = split_data.next().map(|val| val.to_lowercase());
-    let tile_probs_seed = split_seed.next().map(|val| val.to_lowercase());
+    let tile_probs_data = split_data.next().map(str::to_lowercase);
+    let tile_probs_seed = split_seed.next().map(str::to_lowercase);
     assert_eq!(tile_probs_data, tile_probs_seed);
 
     assert!(split_data.next().is_none());

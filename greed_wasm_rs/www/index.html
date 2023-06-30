@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Greed wasm rust</title>
+</head>
+
+<body>
+  <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+  <script src="./bootstrap.js"></script>
+
+  <button id="gen_btn">Generate</button>
+  <label for="x_size">X Size: <input type="number" value="79" min="1" max="100" name="x_size" id="x_size"></label>
+  <label for="y_size">Y Size: <input type="number" value="21" min="1" max="100" name="y_size" id="y_size"></label>
+  <label for="seed">Seed: <input type="text" placeholder="leave empty for random" name="seed" id="seed"></label>
+
+  <label for="load_game">Load existing: <input type="file" name="load_game" id="load_game" accept=".greed"></label>
+  <button id="save_game">Save</button>
+
+  <div id="out"></div>
+  <div id="greed_field" style="font-family: monospace; font-size: large;"></div>
+</body>
+
+</html>

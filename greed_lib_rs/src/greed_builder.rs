@@ -1,12 +1,15 @@
-use super::{Greed, Seed, Size2D, TileProbs, DEFAULT_SIZE};
+use alloc::string::String;
+
+use super::{Greed, Seed, Size2D, TileProbs};
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct GreedBuilder {
   name: Option<String>,
 }
 
 impl GreedBuilder {
-  pub fn new() -> Self {
+  pub const fn new() -> Self {
     Self { name: None }
   }
 
@@ -17,6 +20,7 @@ impl GreedBuilder {
       tile_probs: None,
     }
   }
+
   pub fn tile_probs(self, probs: TileProbs) -> SizeProbGreedBuilder {
     SizeProbGreedBuilder {
       name: self.name,
@@ -36,7 +40,7 @@ impl GreedBuilder {
     self.name = Some(name);
     self
   }
-
+  #[must_use]
   pub fn build(self) -> Greed {
     SizeProbGreedBuilder {
       name: self.name,
@@ -46,8 +50,14 @@ impl GreedBuilder {
     .build()
   }
 }
+impl Default for GreedBuilder {
+  fn default() -> Self {
+    Self::new()
+  }
+}
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct SeedGreedBuilder {
   name: Option<String>,
   seed: Seed,
@@ -66,6 +76,7 @@ impl SeedGreedBuilder {
 }
 
 #[derive(Clone, PartialEq, Eq)]
+#[must_use]
 pub struct SizeProbGreedBuilder {
   name: Option<String>,
   size: Option<Size2D>,
@@ -73,7 +84,7 @@ pub struct SizeProbGreedBuilder {
 }
 impl SizeProbGreedBuilder {
   pub fn build(self) -> Greed {
-    let size = self.size.unwrap_or(DEFAULT_SIZE);
+    let size = self.size.unwrap_or(Size2D::DEFAULT_SIZE);
 
     let seed = Seed::new_random(size, self.tile_probs);
     SeedGreedBuilder {

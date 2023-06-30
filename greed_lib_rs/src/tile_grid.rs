@@ -1,5 +1,10 @@
+use alloc::{fmt, string::String};
+
 use super::{Grid2D, Pos, Size2D, Tile};
-use std::{fmt::Write, iter::FusedIterator};
+use core::{
+  fmt::{Formatter, Write},
+  iter::FusedIterator,
+};
 
 pub trait TileGet<I> {
   fn get(&self, index: I) -> Option<Tile>;
@@ -221,7 +226,10 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + Grid2D {
     )
   }
 
-  fn display_fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  /// Implementation for Display that automatially Displays all tiles in the grid
+  /// # Errors
+  /// If the formatter failed a write.
+  fn display_fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     for row in self.rows() {
       for tile in row {
         f.write_char(char::from(tile))?;
@@ -231,9 +239,9 @@ pub trait TileGrid: TileGet<usize> + TileGet<Pos> + Grid2D {
     Ok(())
   }
 
-  /// All types that implement TileGrid should also implement Display
-  /// so you can alternatively call to_string which will usually end up calling this function.
-  /// This name is a bit weird to avoid colliding with the ToString trait.
+  /// All types that implement `TileGrid` should also implement Display
+  /// so you can alternatively call `to_string` which will usually end up calling this function.
+  /// This name is a bit weird to avoid colliding with the `ToString` trait.
   fn to_string_tile_grid(&self) -> String {
     // Don't forget about the new line characters
     let mut out = String::with_capacity(self.tile_count() + self.dimensions().y_size);

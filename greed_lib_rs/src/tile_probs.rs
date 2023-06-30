@@ -1,12 +1,14 @@
 use arbitrary::Arbitrary;
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 type Inner = [u8; 9];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TileProbs(Inner);
 
-pub const DEFAULT_TILE_PROBABILITIES: TileProbs = TileProbs([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+impl TileProbs {
+  pub const DEFAULT_TILE_PROBABILITIES: TileProbs = TileProbs([1, 1, 1, 1, 1, 1, 1, 1, 1]);
+}
 
 impl IntoIterator for TileProbs {
   type Item = <Inner as IntoIterator>::Item;
@@ -25,7 +27,7 @@ impl<'a> IntoIterator for &'a TileProbs {
   }
 }
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum TileProbsConversionError {
   #[error("Empty Tile Probabilities Field")]
   Empty,
@@ -51,14 +53,14 @@ impl TryFrom<&str> for TileProbs {
     }
     let mut val_slices = value.as_bytes().chunks(2);
     let mut vals = [0; 9];
-    for val in vals.iter_mut() {
+    for val in &mut vals {
       let val_slice = val_slices.next().unwrap(); // since we checked the size previously this check is redundant
       let val_slice =
-        std::str::from_utf8(val_slice).map_err(|_| TileProbsConversionError::InvalidFormat)?;
+        core::str::from_utf8(val_slice).map_err(|_| TileProbsConversionError::InvalidFormat)?;
       *val =
         u8::from_str_radix(val_slice, 16).map_err(|_| TileProbsConversionError::InvalidFormat)?;
     }
-    TileProbs::try_from(vals)
+    Self::try_from(vals)
   }
 }
 impl From<TileProbs> for Inner {

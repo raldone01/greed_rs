@@ -1,11 +1,12 @@
 use super::{
   FakeTile, FakeTileConversionError, GameFieldParserError, GameState, Grid2D, Pos, Seed, Size2D,
-  Tile, TileChooser, TileGet, TileGrid, DEFAULT_SIZE,
+  Tile, TileChooser, TileGet, TileGrid,
 };
+use alloc::{boxed::Box, fmt, format, string::String, vec::Vec};
+use core::fmt::{Debug, Display, Formatter};
 use rand::prelude::*;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha512};
-use std::fmt::{Debug, Display};
 
 /// This immutable structure represents the initial state of a game of greed.
 /// It contains all tiles including the player.
@@ -36,7 +37,7 @@ impl GameField {
     let mut vec: Box<_> = (0..size.tile_count())
       .map(|_| tile_chooser.choose())
       .collect();
-
+    #[allow(clippy::cast_possible_wrap)] // Can nerver wrap since Sice2D contains limited sizes.
     let player_pos = Pos {
       x: tile_chooser.rng.gen_range(0..size.x_size) as isize,
       y: tile_chooser.rng.gen_range(0..size.y_size) as isize,
@@ -50,7 +51,8 @@ impl GameField {
     }
   }
 
-  pub fn from_seed(seed: &Seed) -> GameField {
+  #[must_use]
+  pub fn from_seed(seed: &Seed) -> Self {
     let mut hasher = Sha512::new();
     hasher.update(seed.user_str());
     let hash = hasher.finalize();
@@ -59,7 +61,7 @@ impl GameField {
     // init the random gen with the first 16 bytes of the hash
     let mut rng = rand_pcg::Pcg64Mcg::from_seed(used_hash);
     let mut tile_chooser = TileChooser::new(&mut rng, seed.tile_probabilities());
-    GameField::new_random(&mut tile_chooser, seed.size())
+    Self::new_random(&mut tile_chooser, seed.size())
   }
 }
 
@@ -110,13 +112,13 @@ impl Grid2D for GameField {
 
 impl From<&Seed> for GameField {
   fn from(seed: &Seed) -> Self {
-    GameField::from_seed(seed)
+    Self::from_seed(seed)
   }
 }
 
 impl From<&GameField> for String {
   fn from(game_field: &GameField) -> Self {
-    game_field.to_string()
+    format!("{}", game_field)
   }
 }
 
@@ -124,7 +126,10 @@ impl TryFrom<&str> for GameField {
   type Error = GameFieldParserError;
 
   fn try_from(value: &str) -> Result<Self, Self::Error> {
-    let default_size = DEFAULT_SIZE;
+    if value.is_empty() {
+      return Err(GameFieldParserError::NoTrailingNewLine); // Mabe add a better error
+    }
+    let default_size = Size2D::DEFAULT_SIZE;
     let mut vec = Vec::with_capacity(default_size.tile_count());
 
     let mut x_size = None;
@@ -193,7 +198,7 @@ impl TryFrom<&str> for GameField {
     assert!(vec.len() == size.tile_count());
     let vec = vec.into_boxed_slice();
 
-    let game_field = GameField {
+    let game_field = Self {
       vec,
       size,
       player_pos: player_pos.ok_or(GameFieldParserError::PlayerNotFound)?,
@@ -249,7 +254,7 @@ impl TileGet<Pos> for GameField {
 }
 
 impl Display for GameField {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     self.display_fmt(f)
   }
 }

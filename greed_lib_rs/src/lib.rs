@@ -1,4 +1,8 @@
-#[allow(clippy::module_inception)]
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+#![no_std]
+extern crate alloc;
+
 mod greed;
 pub use greed::{GameMeta, Greed};
 
@@ -16,7 +20,7 @@ mod pos;
 pub use pos::Pos;
 
 mod size_2d;
-pub use size_2d::{Size2D, Size2DConversionError, DEFAULT_SIZE};
+pub use size_2d::{Size2D, Size2DConversionError};
 
 mod game_field;
 pub use game_field::GameField;
@@ -35,7 +39,7 @@ pub use tile_grid::{
   ColIterator, RowIterator, StrideTileIterator, TileGet, TileGrid, TileIterator,
 };
 mod tile_probs;
-pub use tile_probs::{TileProbs, TileProbsConversionError, DEFAULT_TILE_PROBABILITIES};
+pub use tile_probs::{TileProbs, TileProbsConversionError};
 
 mod seed;
 pub use seed::{Seed, SeedConversionError, UserString, UserStringError};

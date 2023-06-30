@@ -1,6 +1,6 @@
+use core::fmt::{self, Debug, Display, Formatter};
 use serde::{Deserialize, Serialize};
-use std::fmt::{Debug, Display};
-use thiserror::Error;
+use thiserror_no_std::Error;
 
 #[derive(Error, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum AmountConversionError {
@@ -14,21 +14,23 @@ pub enum AmountConversionError {
 pub struct Amount(u8);
 
 impl Debug for Amount {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Debug::fmt(&self.0, f)
   }
 }
 impl Display for Amount {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     Display::fmt(&self.0, f)
   }
 }
 
 impl Amount {
-  pub fn amount(self) -> u8 {
+  #[must_use]
+  pub const fn amount(self) -> u8 {
     self.0
   }
-  pub(super) fn new_unchecked(val: u8) -> Self {
+  #[must_use]
+  pub(super) const fn new_unchecked(val: u8) -> Self {
     Self(val)
   }
 }
@@ -54,6 +56,7 @@ impl TryFrom<usize> for Amount {
   type Error = AmountConversionError;
   fn try_from(val: usize) -> Result<Self, Self::Error> {
     if val < 10 {
+      #[allow(clippy::cast_possible_truncation)] // Never actually truncates since `val < 10`
       Ok(Self(val as u8)) // safe since val is < 10
     } else {
       Err(AmountConversionError::ToBig)

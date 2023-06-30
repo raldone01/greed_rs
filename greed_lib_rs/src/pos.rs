@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
-use std::{
+use core::{
   fmt,
   ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use serde::{Deserialize, Serialize};
 
 use super::{Amount, Direction};
 
@@ -16,8 +16,9 @@ pub struct Pos {
 }
 
 impl Pos {
-  pub fn new(x: isize, y: isize) -> Self {
-    Pos { x, y }
+  #[must_use]
+  pub const fn new(x: isize, y: isize) -> Self {
+    Self { x, y }
   }
 }
 
@@ -29,13 +30,13 @@ impl From<Pos> for (isize, isize) {
 
 impl From<(isize, isize)> for Pos {
   fn from((x, y): (isize, isize)) -> Self {
-    Pos::new(x, y)
+    Self::new(x, y)
   }
 }
 
 impl From<Direction> for Pos {
   fn from(dir: Direction) -> Self {
-    Pos::new(
+    Self::new(
       isize::from(dir.contains(Direction::RIGHT)) - isize::from(dir.contains(Direction::LEFT)),
       isize::from(dir.contains(Direction::DOWN)) - isize::from(dir.contains(Direction::UP)),
     )
@@ -43,30 +44,30 @@ impl From<Direction> for Pos {
 }
 
 impl Add<Direction> for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   fn add(self, rhs: Direction) -> Self::Output {
-    self + Pos::from(rhs)
+    self + Self::from(rhs)
   }
 }
 
 impl AddAssign<Direction> for Pos {
   fn add_assign(&mut self, rhs: Direction) {
-    *self += Pos::from(rhs);
+    *self += Self::from(rhs);
   }
 }
 
 impl Sub<Direction> for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   fn sub(self, rhs: Direction) -> Self::Output {
-    self - Pos::from(rhs)
+    self - Self::from(rhs)
   }
 }
 
 impl SubAssign<Direction> for Pos {
   fn sub_assign(&mut self, rhs: Direction) {
-    *self -= Pos::from(rhs);
+    *self -= Self::from(rhs);
   }
 }
 
@@ -74,7 +75,7 @@ impl Add for Pos {
   type Output = Pos;
 
   fn add(self, rhs: Self) -> Self::Output {
-    Pos::new(self.x + rhs.x, self.y + rhs.y)
+    Self::new(self.x + rhs.x, self.y + rhs.y)
   }
 }
 
@@ -86,15 +87,15 @@ impl AddAssign for Pos {
 }
 
 impl Neg for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   fn neg(self) -> Self::Output {
-    Pos::new(-self.x, -self.y)
+    Self::new(-self.x, -self.y)
   }
 }
 
 impl Sub for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   #[allow(clippy::suspicious_arithmetic_impl)] // Clippy is a bit stupid
   fn sub(self, rhs: Self) -> Self::Output {
@@ -110,11 +111,11 @@ impl SubAssign for Pos {
 }
 
 impl<T: Into<isize>> Mul<T> for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   fn mul(self, rhs: T) -> Self::Output {
     let mult = rhs.into();
-    Pos {
+    Self {
       x: self.x * mult,
       y: self.y * mult,
     }
@@ -122,10 +123,10 @@ impl<T: Into<isize>> Mul<T> for Pos {
 }
 
 impl Mul<Amount> for Pos {
-  type Output = Pos;
+  type Output = Self;
 
   fn mul(self, rhs: Amount) -> Self::Output {
-    Pos {
+    Self {
       x: self.x * isize::from(rhs.amount()),
       y: self.y * isize::from(rhs.amount()),
     }

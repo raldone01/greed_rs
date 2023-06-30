@@ -1,9 +1,10 @@
+use alloc::format;
+use core::fmt::{self, Debug, Display, Formatter};
 use num_enum::TryFromPrimitive;
 use serde::{
   de::{self, Visitor},
   Deserialize, Deserializer, Serialize,
 };
-use std::fmt;
 
 use super::TileParseError;
 
@@ -45,7 +46,7 @@ impl<'de> Visitor<'de> for TileVisitor {
   where
     E: de::Error,
   {
-    Tile::try_from(v).map_err(|err| E::custom(err.to_string()))
+    Tile::try_from(v).map_err(|err| E::custom(format!("{}", err)))
   }
 }
 
@@ -61,6 +62,7 @@ impl<'de> Deserialize<'de> for Tile {
 impl Tile {
   pub const EMPTY: Tile = Tile::V0;
 
+  #[must_use]
   pub fn amount(self) -> Option<u8> {
     if self == Tile::Player {
       None
@@ -69,10 +71,12 @@ impl Tile {
     }
   }
 
+  #[must_use]
   pub fn is_player(self) -> bool {
     self == Tile::Player
   }
 
+  #[must_use]
   pub fn is_empty(self) -> bool {
     self == Tile::EMPTY
   }
@@ -80,14 +84,12 @@ impl Tile {
 
 impl From<Tile> for char {
   fn from(tile: Tile) -> Self {
-    match tile {
-      Tile::Player => '@',
-      // V0 => ' ', Handled in the display function
-      // x if let Some(amount) = self.amount() => { Ok(()) } Unstable damn
-      _ => tile
-        .amount()
-        .map(|a| char::from_digit(u32::from(a), 10).unwrap())
-        .unwrap(),
+    if let Some(amount) = tile.amount() {
+      Self::from_digit(u32::from(amount), 10).unwrap()
+    } else {
+      debug_assert_eq!(tile, Tile::Player);
+      // since .amount() failed we must have a player tile, debug assert to make sure added tile types don't silently do something wrong
+      '@'
     }
   }
 }
@@ -97,18 +99,19 @@ impl TryFrom<char> for Tile {
 
   fn try_from(value: char) -> Result<Self, Self::Error> {
     match value {
-      '@' => Ok(Tile::Player),
-      ' ' => Ok(Tile::V0),
+      '@' => Ok(Self::Player),
+      ' ' => Ok(Self::V0),
+      #[allow(clippy::cast_possible_truncation)] // Always is <= 9
       c => c
         .to_digit(10)
-        .map(|num| Tile::try_from(num as u8).unwrap())
+        .map(|num| Self::try_from(num as u8).unwrap())
         .ok_or(TileParseError { found: c }),
     }
   }
 }
 
-impl fmt::Display for Tile {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for Tile {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     let mut c = char::from(*self);
     if c == '0' {
       c = ' ';
@@ -117,8 +120,8 @@ impl fmt::Display for Tile {
   }
 }
 
-impl fmt::Debug for Tile {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Debug for Tile {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "Tile{self}")
   }
 }

@@ -2,14 +2,12 @@ use super::{
   Amount, Direction, FakeTile, GameField, Grid2D, Playable, PlayableError, Pos, Size2D, Tile,
   TileGet, TileGrid,
 };
+use alloc::{format, rc::Rc, string::String, vec::Vec};
 use bitvec::prelude as bv;
-use std::{
-  fmt::{Debug, Display},
-  rc::Rc,
-};
-use thiserror::Error;
+use core::fmt::{self, Debug, Display, Formatter};
+use thiserror_no_std::Error;
 
-#[derive(Error, Debug, PartialEq)]
+#[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameStateRebuildFromDiffError {
   #[error(
     "Tiles don't match at {} - inital tile: {}; last tile {}",
@@ -62,12 +60,12 @@ impl GameState {
 
     Self {
       mask,
-      game_field,
-      moves,
       player_pos,
+      moves,
+      game_field,
     }
   }
-
+  #[must_use]
   pub fn new(game_field: Rc<GameField>) -> Self {
     Self::new_with_moves(game_field, Vec::new())
   }
@@ -80,10 +78,10 @@ impl GameState {
     let initial_size = initial_game_field.dimensions();
     let last_size = last_game_field.dimensions();
     if initial_size != last_size {
-      Err(GameStateRebuildFromDiffError::DimensionsNotEqual {
+      return Err(GameStateRebuildFromDiffError::DimensionsNotEqual {
         initial_size,
         last_size,
-      })?
+      });
     }
 
     let player_pos = last_game_field.player_pos();
@@ -100,11 +98,11 @@ impl GameState {
       if last_tile == FakeTile::EMTPY {
         mask.set(it, false);
       } else if initial_tile != last_tile {
-        Err(GameStateRebuildFromDiffError::InconsistentTiles {
+        return Err(GameStateRebuildFromDiffError::InconsistentTiles {
           pos: last_game_field.index_to_pos_unchecked(it),
           initial_tile: Tile::from(initial_tile),
           last_tile: Tile::from(last_tile),
-        })?
+        });
       }
     }
 
@@ -116,6 +114,7 @@ impl GameState {
     })
   }
 
+  #[must_use]
   pub fn moves(&self) -> &[(Direction, Amount)] {
     &self.moves
   }
@@ -140,8 +139,9 @@ impl GameState {
     }
   }
 
-  /// Creates a new game_field from the current game_state.
+  /// Creates a new `game_field` from the current `game_state`.
   /// Warning: Discards tile information of the cleared tiles.
+  #[must_use]
   pub fn to_game_field(&self) -> GameField {
     // GameField::try_from(String::from(self).as_str()).unwrap()
     GameField::new_from_game_state(self)
@@ -191,7 +191,7 @@ impl TileGet<Pos> for GameState {
 impl Playable for GameState {
   fn check_move(&self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     let mut current_pos = self.player_pos + dir;
-    // check if position was valid - is the same as calling dir.valid() obviously
+    // check if direction was valid - is the same as calling dir.valid() obviously
     if current_pos == self.player_pos {
       return Err(PlayableError::InvalidDirection);
     }
@@ -220,17 +220,17 @@ impl Playable for GameState {
       if tile == FakeTile::EMTPY {
         return Err(PlayableError::BadMove);
       }
-      moves.push(index)
+      moves.push(index);
     }
 
     // return movements
     Ok(moves)
   }
 
-  /// TODO: give the user a more efficient way to execute a move checked by check_move?
-  /// Maybe introduce a CheckedMove type to do that safely?
+  /// TODO: give the user a more efficient way to execute a move checked by `check_move`?
+  /// Maybe introduce a `CheckedMove` type to do that safely?
   ///
-  /// For the return see check_move function.
+  /// For the return see `check_move` function.
   fn move_(&mut self, dir: Direction) -> Result<Vec<usize>, PlayableError> {
     // commit movements
     let moves = self.check_move(dir)?;
@@ -243,10 +243,12 @@ impl Playable for GameState {
     self.mask.set(player_index, false);
 
     for &index in iter {
-      self.mask.set(index, false)
+      self.mask.set(index, false);
     }
 
     // update the moves array
+    #[allow(clippy::cast_possible_truncation)]
+    // moves.len() can never be bigger than 9 since it originates from a loop over ammount.
     self
       .moves
       .push((dir, Amount::new_unchecked(moves.len() as u8)));
@@ -337,20 +339,21 @@ impl Grid2D for GameState {
 }
 
 impl Display for GameState {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     self.display_fmt(f)
   }
 }
 impl Debug for GameState {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "MASK: ")?;
     let Size2D { x_size, y_size } = self.dimensions();
     for y in 0..y_size {
       for x in 0..x_size {
+        #[allow(clippy::cast_possible_wrap)] // Can never wrap since sizes in Size2D are limited.
         let pos = Pos::new(x as isize, y as isize);
         let index = self.pos_to_index_unchecked(pos);
 
-        write!(f, "{}", self.mask[index] as u8)?;
+        write!(f, "{}", u8::from(self.mask[index]))?;
       }
       writeln!(f)?;
     }
@@ -362,6 +365,6 @@ impl Debug for GameState {
 
 impl From<&GameState> for String {
   fn from(game_field: &GameState) -> Self {
-    game_field.to_string()
+    format!("{}", game_field)
   }
 }
