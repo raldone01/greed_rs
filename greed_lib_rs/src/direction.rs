@@ -8,6 +8,7 @@ use core::{
 use serde::{de, Deserialize, Deserializer, Serialize};
 
 bitflags! {
+  #[derive(Clone, Copy, Debug, PartialEq, Eq)]
   pub struct Direction: u8 {
     const UP    = 0b0000_0001; // 1
     const DOWN  = 0b0000_0010; // 2
@@ -109,7 +110,7 @@ impl Serialize for Direction {
   where
     S: serde::Serializer,
   {
-    serializer.serialize_u8(self.bits)
+    serializer.serialize_u8(self.bits())
   }
 }
 
@@ -125,9 +126,6 @@ impl<'de> Deserialize<'de> for Direction {
 
 impl<'a> Arbitrary<'a> for Direction {
   fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-    #[allow(clippy::cast_possible_truncation)] // Can never truncate since it is always < 16
-    unsafe {
-      Ok(Self::from_bits_unchecked(u.choose_index(16)? as u8))
-    }
+    Self::from_bits(u.choose_index(16)? as u8).ok_or(arbitrary::Error::IncorrectFormat)
   }
 }
