@@ -1,2 +1,3 @@
 match_block_trailing_comma = true
 tab_spaces = 2
+condense_wildcard_suffixes = false

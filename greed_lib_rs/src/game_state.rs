@@ -5,7 +5,7 @@ use super::{
 use alloc::{format, rc::Rc, string::String, vec::Vec};
 use bitvec::prelude as bv;
 use core::fmt::{self, Debug, Display, Formatter};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum GameStateRebuildFromDiffError {

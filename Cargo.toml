@@ -1,3 +1,8 @@
 [workspace]
 resolver = "2"
-members = ["greed_rs", "greed_wasm_rs", "greed_lib_rs", "greed_lib_rs/fuzz"]
+members = [
+  "greed_bevy_rs",
+  "greed_wasm_rs",
+  "greed_lib_rs",
+  "greed_lib_rs/fuzz",
+]

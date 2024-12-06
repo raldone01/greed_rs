@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = "0.2.87"
+wasm-bindgen = "0.2.97"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -29,12 +29,12 @@ wee_alloc = { version = "0.4.5", optional = true }
 greed_lib_rs = { path = "../greed_lib_rs" }
 
 # Explicit direct dependency in order to enable js support for random generation
-getrandom = { version = "0.2.10", features = ["js"] }
+getrandom = { version = "0.2.15", features = ["js"] }
 # Explicit direct dependency in order to enable js support for getting the current time
-chrono = { version = "0.4.26", features = ["wasmbind"] }
+chrono = { version = "0.4.38", features = ["wasmbind"] }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.37"
+wasm-bindgen-test = "0.3.47"
 
 # [profile.release] # TODO
 # # Tell `rustc` to optimize for small code size.

@@ -1,5 +1,5 @@
 [package]
-name = "greed_rs"
+name = "greed_bevy_rs"
 version = "0.1.0"
 edition = "2021"
 authors = [
@@ -15,11 +15,11 @@ categories = ["game-engines", "games", "wasm"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-crossterm = "0.26.1"
+crossterm = "0.28.1"
 # termion = "1.5.6"
 tui = "0.19.0"
-clap = { version = "4.3.11", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 greed_lib_rs = { path = "../greed_lib_rs" }
 
 [[bin]]
-name = "greed_rs"
+name = "greed_bevy_rs"

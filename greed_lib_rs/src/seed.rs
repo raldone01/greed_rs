@@ -4,7 +4,7 @@ use arbitrary::Arbitrary;
 use core::fmt::{Debug, Display, Formatter, Write};
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum UserStringError {

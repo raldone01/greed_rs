@@ -2,7 +2,7 @@ use super::{Grid2D, Pos};
 use arbitrary::Arbitrary;
 use core::{fmt, num::TryFromIntError, ops::RangeInclusive};
 use serde::{Deserialize, Serialize};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[non_exhaustive]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]

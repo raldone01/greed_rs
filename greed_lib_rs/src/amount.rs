@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Display, Formatter};
 use serde::{Deserialize, Serialize};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum AmountConversionError {

@@ -1,7 +1,7 @@
 use super::{amount::AmountConversionError, Amount, Tile};
 use core::fmt::{self, Debug, Formatter};
 use serde::{Deserialize, Serialize};
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "u8")]

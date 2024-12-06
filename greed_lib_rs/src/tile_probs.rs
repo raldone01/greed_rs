@@ -1,5 +1,5 @@
 use arbitrary::Arbitrary;
-use thiserror_no_std::Error;
+use thiserror::Error;
 
 type Inner = [u8; 9];
 
