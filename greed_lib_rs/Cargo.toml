@@ -16,7 +16,7 @@ categories = ["game-engines", "games", "wasm"]
 
 [dependencies]
 rand = "0.8.5"
-thiserror = { version = "2.0.4", no-default-features = true }
+thiserror = { version = "2.0.4", default-features = false }
 bitflags = "2.6.0"
 bitvec = "1.0.1"
 num_enum = "0.7.3"
