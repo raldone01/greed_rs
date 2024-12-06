@@ -2,7 +2,7 @@ use super::{
   Amount, Direction, GameField, GameState, GreedParserError, Grid2D, MoveValidationError, Playable,
   PlayableError, Pos, ReproductionError, Seed, Size2D, Tile, TileGet, TileGrid,
 };
-use alloc::{format, rc::Rc, string::String, vec::Vec};
+use alloc::{format, string::String, sync::Arc, vec::Vec};
 use chrono::{DateTime, Duration, Local, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -73,7 +73,7 @@ pub struct Greed {
 
 impl Greed {
   pub(super) fn new_from_builder(name: String, seed: Seed) -> Self {
-    let game_field = Rc::from(GameField::from_seed(&seed));
+    let game_field = Arc::from(GameField::from_seed(&seed));
 
     Greed {
       seed: Some(seed),
@@ -120,7 +120,7 @@ impl Greed {
     };
 
     // assemble the game_field
-    let game_field = Rc::from(
+    let game_field = Arc::from(
       game_meta
         .initial_game_field
         .or_else(|| game_meta.last_game_field.clone())

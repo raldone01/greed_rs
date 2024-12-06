@@ -1,5 +1,5 @@
 #![no_main]
-use std::{convert::TryFrom, rc::Rc};
+use std::{convert::TryFrom, sync::Arc};
 
 use libfuzzer_sys::fuzz_target;
 
@@ -10,7 +10,7 @@ fuzz_target!(|data: &str| {
   //  return;
   //}
   if let Ok(game) = GameField::try_from(data) {
-    let mut game = GameState::new(Rc::new(game));
+    let mut game = GameState::new(Arc::new(game));
     let _ = game.move_(Direction::RIGHT);
     let _ = game.undo_move();
     let _ = game.undo_move();

@@ -2,7 +2,7 @@ use super::{
   Amount, Direction, FakeTile, GameField, Grid2D, Playable, PlayableError, Pos, Size2D, Tile,
   TileGet, TileGrid,
 };
-use alloc::{format, rc::Rc, string::String, vec::Vec};
+use alloc::{format, string::String, sync::Arc, vec::Vec};
 use bitvec::prelude as bv;
 use core::fmt::{self, Debug, Display, Formatter};
 use thiserror::Error;
@@ -36,11 +36,14 @@ pub struct GameState {
   mask: bv::BitVec,
   player_pos: Pos,
   moves: Vec<(Direction, Amount)>,
-  game_field: Rc<GameField>,
+  game_field: Arc<GameField>,
 }
 
 impl GameState {
-  pub(super) fn new_with_moves(game_field: Rc<GameField>, moves: Vec<(Direction, Amount)>) -> Self {
+  pub(super) fn new_with_moves(
+    game_field: Arc<GameField>,
+    moves: Vec<(Direction, Amount)>,
+  ) -> Self {
     let player_pos = game_field.player_pos();
     let player_index = game_field.pos_to_index(player_pos).unwrap();
     let tile_count = game_field.tile_count();
@@ -66,12 +69,12 @@ impl GameState {
     }
   }
   #[must_use]
-  pub fn new(game_field: Rc<GameField>) -> Self {
+  pub fn new(game_field: Arc<GameField>) -> Self {
     Self::new_with_moves(game_field, Vec::new())
   }
 
   pub(super) fn try_rebuild_from_game_field_diff(
-    initial_game_field: Rc<GameField>,
+    initial_game_field: Arc<GameField>,
     last_game_field: &GameField,
     moves: Vec<(Direction, Amount)>,
   ) -> Result<Self, GameStateRebuildFromDiffError> {
