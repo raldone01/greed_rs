@@ -1,7 +1,7 @@
 [package]
 name = "greed_bevy_rs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = [
   "raldone01 <raldone01@gmail.com>",
   "onestacked <chrisi.schrefl@gmail.com>",
@@ -15,11 +15,54 @@ categories = ["game-engines", "games", "wasm"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+bevy = { version = "0.15.0", default-features = false, features = [
+  "multi_threaded",    # Run with multithreading
+  "bevy_audio",        # Builtin audio
+  "bevy_gilrs",        # Gamepad input support
+  "vorbis",            # Audio: OGG Vorbis
+  "reflect_functions", # Reflection for functions
+  "bevy_state",        # Global state machines
+  #"accesskit_unix", # (Unix-like) AccessKit integration for UI Accessibility
+] }
+bevy_rand = { version = "0.8.0", features = ["rand_chacha", "wyrand"] }
+rand_core = "0.6.4"
+sha2 = "0.10.8"
 crossterm = "0.28.1"
-# termion = "1.5.6"
-tui = "0.19.0"
 clap = { version = "4.5.23", features = ["derive"] }
 greed_lib_rs = { path = "../greed_lib_rs" }
+accesskit_unix = "0.13.1"
+frunk = "0.4.3"
+
+# Enable a small amount of optimization in the dev profile.
+[profile.dev]
+opt-level = 1
+
+# Enable a large amount of optimization in the dev profile for dependencies.
+[profile.dev.package."*"]
+opt-level = 3
+
+# Enable more optimization in the release profile at the cost of compile time.
+[profile.release]
+# Compile the entire crate as one unit.
+# Slows compile times, marginal improvements.
+codegen-units = 1
+# Do a second optimization pass over the entire program, including dependencies.
+# Slows compile times, marginal improvements.
+lto = "thin"
+
+# Optimize for size in the wasm-release profile to reduce load times and bandwidth usage on web.
+[profile.wasm-release]
+# Default to release profile values.
+inherits = "release"
+# Optimize with size in mind (also try "z", sometimes it is better).
+# Slightly slows compile times, great improvements to file size and runtime performance.
+opt-level = "s"
+# Strip all debugging information from the binary to slightly reduce file size.
+strip = "debuginfo"
+
+[features]
+default = ["fast-compile"]
+fast-compile = ["bevy/dynamic_linking"]
 
 [[bin]]
 name = "greed_bevy_rs"
